@@ -81,27 +81,29 @@ class GraphGNN():
 
             x = self.model(data[0][0].float(), data[1][0])
             x = x.squeeze(dim=-1)
-            breakpoint()
             if single_node:
                 x = x[np.unique(data.batch.cpu(), return_index=True)[1]]
 
-            if False:
-                predictions = (x > 0).float()
-                data.y = data.y.float()
-            else:
-                predictions = x.argmax(dim=-1)
+            # if False:
+            #     predictions = (x > 0).float()
+            #     data.y = data.y.float()
+            # else:
+            #     predictions = x.argmax(dim=-1)
 
 
-            loss = self.loss_module(x, data.y)
+            loss = self.loss_module(x, x)
             loss.backward()
             avg_loss += loss.item()
 
             self.optimizer.step()
-            batch_scores = self.metrics_train(predictions, data.y.int())
+            # batch_scores = self.metrics_train(predictions, data.y.int())
             pbar.set_description(f"Train on Epoch {epoch}", refresh=False)
             metrics_dict = {'loss': avg_loss / (epoch + 1)}
-            metrics_dict.update(batch_scores)
+            # metrics_dict.update(batch_scores)
             pbar.set_postfix(metrics_dict, refresh=False)
+
+            print("I am here!")
+
         # self.scheduler.step()
         metrics_dict.update(self.metrics_train.compute())
         wandb.log(metrics_dict)
