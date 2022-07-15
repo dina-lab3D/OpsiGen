@@ -11,6 +11,12 @@ PROTEIN_NAME = "1ATN"
 
 
 def convert_to_pytorch_geometric(featured_graph, nx_graph):
+    """
+    return edge_data, edge_index as needed in pytorch geometric
+    :param featured_graph: the graph as a matrix
+    :param nx_graph: the graph as nx graph
+    :return: edge_data, edge_index of the graph
+    """
     edge_data = torch.tensor(np.vstack([np.array(l[0]) for l in featured_graph]))
     adj = nx.to_scipy_sparse_matrix(nx_graph)
     edge_index, _ = converter.from_scipy_sparse_matrix(adj)
@@ -19,6 +25,11 @@ def convert_to_pytorch_geometric(featured_graph, nx_graph):
 
 
 def graph_to_data(graph):
+    """
+    from a graph get pytorch geometric data of the graph
+    :param graph: the graph to work on
+    :return: edge_data, edge_index of the graph
+    """
     preprocess_graph.update_graph_features(graph)
     featured_graph = proteingraph.conversion.generate_feature_dataframe(graph, funcs=feature_extractor.feature_generator_funcs,
                                                            return_array=True)

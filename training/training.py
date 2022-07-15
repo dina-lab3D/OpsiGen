@@ -34,8 +34,8 @@ class GraphGNN:
         self.metrics_val = metrics.clone(prefix='val_')
 
     def save(self):
-        path = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/model"
-        config_path = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/config"
+        path = consts.MODEL_PATH
+        config_path = consts.CONFIG_PATH
         torch.save({"model_state_dict": self.model.state_dict(),
                     "optimizer_state_dict": self.optimizer.state_dict(),
                     "loss": self.loss_module,
@@ -118,7 +118,7 @@ class GraphGNN:
 
 def main():
     my_model = GraphGNN()
-    train_dataloader = DataLoader(PDBDataset(consts.PDB_LIST, consts.PATH), shuffle=True)
+    train_dataloader = DataLoader(PDBDataset(consts.PDB_LIST, consts.PDBS_PATH), shuffle=True)
     my_model.train(training_loader=train_dataloader)
 
 

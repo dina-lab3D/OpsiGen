@@ -285,4 +285,6 @@ PDB_LIST = [
  '433d'
 ]
 
-PATH = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/graphs"
+PDBS_PATH = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/graphs"
+MODEL_PATH = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/model"
+CONFIG_PATH = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/config"
