@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="SshConfigs">
-    <configs>
-      <sshConfig authType="PASSWORD" host="river.cs.huji.ac.il" id="c637ba68-893d-4291-b2af-c3d4176090cc" port="22" nameFormat="DESCRIPTIVE" username="meitar" />
-    </configs>
-  </component>
-</project>
