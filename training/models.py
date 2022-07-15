@@ -321,7 +321,7 @@ class GraphGNNModel(nn.Module):
         x = geom_nn.global_mean_pool(x, batch_idx) # Average pooling
         # mg_idx_mask = [np.where(batch_idx.cpu()==item)[0][0] for item in range(max(batch_idx)+1)] # classify only the 0th node in every graph
         # x = x[mg_idx_mask, :]
-        #TODO for single node classification uncomment above and get rid of pooling.
+        # TODO for single node classification uncomment above and get rid of pooling.
         x = self.head(x)
         return x
 

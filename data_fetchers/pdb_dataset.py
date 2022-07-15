@@ -1,7 +1,7 @@
 from torch.utils.data.dataset import Dataset
 import Bio.PDB
 from proteingraph import read_pdb
-import data_parser
+from parsers import data_parser
 
 
 class PDBDataset(Dataset):
@@ -15,7 +15,6 @@ class PDBDataset(Dataset):
 
     def __getitem__(self, index):
         print("file is ", self.ids_list[index])
-        breakpoint()
         try:
             graph = read_pdb("{}/{}".format(self.path, ("pdb" + self.ids_list[index] + ".ent")))
             return data_parser.graph_to_data(graph)

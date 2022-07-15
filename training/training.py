@@ -1,19 +1,17 @@
-import os.path
-
 import wandb
 from tqdm import tqdm
 
 import torch
 import torch.nn as nn
-from torchmetrics import MetricCollection, Accuracy, Recall, Precision, Specificity, AUROC, ROC, PrecisionRecallCurve
+from torchmetrics import MetricCollection, Accuracy, Recall, Precision, Specificity, AUROC
 import torch.optim as optim
 import numpy as np
 import pickle
-import matplotlib.pyplot as plt
 
-import consts
-from pdb_dataset import PDBDataset
-import models
+
+import configurations.consts as consts
+from data_fetchers.pdb_dataset import PDBDataset
+import training.models as models
 from torch.utils.data import DataLoader
 
 """
@@ -23,7 +21,7 @@ saving models
 """
 
 
-class GraphGNN():
+class GraphGNN:
 
     def __init__(self, config=None):
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -31,11 +29,9 @@ class GraphGNN():
         self.loss_module = nn.CrossEntropyLoss()
         self.optimizer = optim.AdamW(self.model.parameters(), lr=0.001)
         # self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer)
-        # TODO if we want a scheduler uncomment and update single epoch func
         metrics = MetricCollection([Accuracy(), Precision(), Recall(), Specificity(), AUROC()]).to(self.device)
         self.metrics_train = metrics.clone(prefix='train_')
         self.metrics_val = metrics.clone(prefix='val_')
-
 
     def save(self):
         path = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/model"
@@ -89,7 +85,6 @@ class GraphGNN():
             #     data.y = data.y.float()
             # else:
             #     predictions = x.argmax(dim=-1)
-
 
             loss = self.loss_module(x, x)
             loss.backward()
