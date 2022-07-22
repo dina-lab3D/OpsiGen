@@ -100,7 +100,7 @@ class GraphGNN:
             print("I am here!")
 
         # self.scheduler.step()
-        metrics_dict.update(self.metrics_train.compute())
+        # metrics_dict.update(self.metrics_train.compute())
         wandb.log(metrics_dict)
         pbar.close()
 
