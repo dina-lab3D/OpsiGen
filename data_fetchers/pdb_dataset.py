@@ -31,7 +31,8 @@ class PDBDataset(Dataset):
         :param index: index of the list to retrieve
         """
         try:
-            graph = read_pdb("{}/{}".format(self.path, ("pdb" + self.ids_list[index] + ".ent")))
+            # graph = read_pdb("{}/{}".format(self.path, ("pdb" + self.ids_list[index] + ".ent")))
+            graph = read_pdb("{}/{}".format(self.path, ("pdb" + "2pwt" + ".ent")))
             return data_parser.graph_to_data(graph)
         except FileNotFoundError:
             raise ValueError("File not found")

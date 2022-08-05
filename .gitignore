@@ -2,3 +2,5 @@
 ./lib64
 ./bin
 ./share
+./graphs
+./cryo-em-data

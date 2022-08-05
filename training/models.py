@@ -325,6 +325,30 @@ class GraphGNNModel(nn.Module):
         x = self.head(x)
         return x
 
+
+class CryoNet(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        self.conv_layer1 = self._conv_layer_set(1, 10)
+        self.conv_layer2 = self._conv_layer_set(10, 20)
+        self.fc1 = nn.Linear(61, 40)
+
+    def forward(self, x):
+        out = self.conv_layer1(x)
+        out = self.conv_layer2(out)
+        out = self.fc1(out)
+        return out
+
+    def _conv_layer_set(self, in_c, out_c):
+        conv_layer = nn.Sequential(
+            nn.Conv3d(in_c, out_c, kernel_size=(5, 5, 5)),
+            nn.LeakyReLU(),
+            nn.MaxPool3d((2, 2, 2)),
+        )
+        return conv_layer
+
+
 gnn_layer_by_name = {
     "GCN": geom_nn.GCNConv,
     "GAT": geom_nn.GATConv,
