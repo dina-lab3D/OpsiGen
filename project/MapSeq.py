@@ -6,35 +6,42 @@ import mrcfile
 import numpy as np
 
 import graph_builders
+import torch
 
 
 class MapSeq:
     funcs = {
-        graph_builders.compute_hydrophobic_feature: 10,
-        graph_builders.compute_ionic_feature: 15,
-        graph_builders.compute_hydrogen_feature: 15,
-        graph_builders.compute_cation_pi_feature: 10,
-        graph_builders.compute_disulfide_feature: 10
+        graph_builders.calculate_graph_desc: 100
     }
 
-    def __init__(self, map_path, pdb_path):
+    def __init__(self, map_path, pdb_path, boxes_shape=(8,8,8)):
         self.map_path = map_path
         self.pdb_path = pdb_path
         parser = Bio.PDB.PDBParser(PERMISSIVE=True, QUIET=True)
-        self.atoms = parser.get_structure("7qti", self.pdb_path).get_atoms()
+        structure = parser.get_structure("7qti", self.pdb_path)
+        self.center = structure.center_of_mass()
+        # structure.transform(rot=np.eye(3), tran=self.center)
+        print("Center of mass is ", self.center)
+        self.atoms = structure.get_atoms()
         with mrcfile.open(self.map_path) as protein:
             self.map_data = protein.data
+        self.boxes_x_size = boxes_shape[0]
+        self.boxes_y_size = boxes_shape[1]
+        self.boxes_z_size = boxes_shape[2]
         self.good_boxes = None
         self.preprocess()
 
     def _divide_to_boxes(self):
-        self.boxes_x_size = 8
-        self.boxes_y_size = 8
-        self.boxes_z_size = 8
+
+        # count the number of boxes
         boxes_x_num = int(self.map_data.shape[0] / self.boxes_x_size)
         boxes_y_num = int(self.map_data.shape[1] / self.boxes_y_size)
         boxes_z_num = int(self.map_data.shape[2] / self.boxes_z_size)
-        print(boxes_z_num)
+
+        print("num x boxes", boxes_x_num)
+        print("map shape x", self.map_data.shape[0])
+
+        # initialize empty boxes
         self.boxes = [[[[] for _ in range(boxes_z_num)] for _ in range(boxes_y_num)] for _ in range(boxes_x_num)]
         for atom in self.atoms:
             atom_vec = atom.get_vector()
@@ -45,27 +52,23 @@ class MapSeq:
             self.boxes[int(atom_vec[0] / self.boxes_x_size) - 1][int(atom_vec[1] / self.boxes_y_size) - 1][
                 int(atom_vec[2] / self.boxes_z_size) - 1].append(atom)
 
-        counter = 0
-
     def _find_good_boxes(self, threas):
-        good_boxes = []
+        self.good_boxes = []
         for i, box2d in enumerate(self.boxes):
             for j, box1d in enumerate(box2d):
                 for k, box in enumerate(box1d):
                     if len(box) > threas:
-                        good_boxes.append((i, j, k))
-
-        return good_boxes
+                        self.good_boxes.append((i, j, k))
 
     def preprocess(self):
         self._divide_to_boxes()
-        self.good_boxes = self._find_good_boxes(15)
+        self._find_good_boxes(15)
 
     def _create_descriptor_from_atoms(self, atoms, funcs_dict):
         res = np.array([])
+        # while len(atoms) < max(funcs_dict.values()):
+        #     atoms.append(random.choice(atoms))
         distmat = graph_builders.compute_distance(atoms)
-        while len(atoms) < max(funcs_dict.values()):
-            atoms.append(random.choice(atoms))
         for func in funcs_dict:
             res = np.concatenate([res, func(atoms, funcs_dict[func], distmat)])
 
@@ -80,9 +83,12 @@ class MapSeq:
         for x in range(max(box_x - 1, 0), min(box_x + 2, self.map_data.shape[0] + 1)):
             for y in range(max(box_y - 1, 0), min(box_y + 2, self.map_data.shape[1] + 1)):
                 for z in range(max(box_z - 1, 0), min(box_z + 2, self.map_data.shape[2] + 1)):
-                    for atom in self.boxes[x][y][z]:
-                        if np.linalg.norm((atom.coord - point), np.inf) < threas:
-                            atoms.append(atom)
+                    try:
+                        for atom in self.boxes[x][y][z]:
+                            if np.linalg.norm((atom.coord - point), np.inf) < threas:
+                                atoms.append(atom)
+                    except Exception as e:
+                        breakpoint()
 
         return atoms
 
@@ -107,17 +113,18 @@ class MapSeq:
         x_pad = (x_ - x)
         return np.pad(array, ((z_pad // 2, z_pad // 2 + z_pad % 2),
                               (y_pad // 2, y_pad // 2 + y_pad % 2),
-                              (x_pad // 2, x_pad // 2 + x_pad % 2)),
-                      mode='edge')
+                              (x_pad // 2, x_pad // 2 + x_pad % 2))
+                      )
 
-    def generate_descriptors(self, point, threas):
-        atoms = self._get_close_atoms(point, threas)
-        if len(atoms) == 0:
-            return np.zeros((threas * 2, threas * 2, threas * 2)), np.zeros((sum(MapSeq.funcs.values()),))
-        atoms_desc = self._create_descriptor_from_atoms(atoms=atoms, funcs_dict=MapSeq.funcs)
+    def generate_descriptors(self, point, threas, to_center=False):
+        # atoms = self._get_close_atoms(point, threas)
+        # if len(atoms) == 0:
+        #     return np.zeros((threas * 2, threas * 2, threas * 2)), np.zeros((sum(MapSeq.funcs.values()),))
+        # atoms_desc = self._create_descriptor_from_atoms(atoms=atoms, funcs_dict=MapSeq.funcs)
+        atoms_desc = None
 
         map_desc = self.map_data[point[0] - threas: point[0] + threas, point[1] - threas: point[1] + threas,
                    point[2] - threas: point[2] + threas]
         map_desc = self._to_shape(map_desc, (threas * 2, threas * 2, threas * 2))
 
-        return map_desc, atoms_desc
+        return torch.tensor(map_desc, requires_grad=True), atoms_desc

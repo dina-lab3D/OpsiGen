@@ -16,6 +16,16 @@ def compute_distance(atoms):
     return result
 
 
+def calculate_graph_desc(atoms, feature_length, distmat):
+    G = nx.Graph()
+    G.add_nodes_from(range(len(atoms)))
+    for i in range(len(atoms)):
+        for j in range((len(atoms))):
+            G.add_edge(i, j, weight=distmat[i][j])
+    result = nx.laplacian_spectrum(G)[::-1][:feature_length]
+    return np.hstack((result, np.zeros(feature_length - result.shape[0])))
+
+
 def compute_hydrophobic_feature(atoms, feature_length, distmat):
     """
     Find all hydrophobic interactions.
