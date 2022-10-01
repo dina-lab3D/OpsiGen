@@ -7,7 +7,8 @@ import numpy as np
 
 import graph_builders
 import torch
-
+from scipy import ndimage
+from scipy.spatial.transform import Rotation as R
 
 class MapSeq:
     funcs = {
@@ -116,7 +117,7 @@ class MapSeq:
                               (x_pad // 2, x_pad // 2 + x_pad % 2))
                       )
 
-    def generate_descriptors(self, point, threas, to_center=False):
+    def generate_descriptors(self, point, threas, to_rotate=None):
         # atoms = self._get_close_atoms(point, threas)
         # if len(atoms) == 0:
         #     return np.zeros((threas * 2, threas * 2, threas * 2)), np.zeros((sum(MapSeq.funcs.values()),))
@@ -125,6 +126,13 @@ class MapSeq:
 
         map_desc = self.map_data[point[0] - threas: point[0] + threas, point[1] - threas: point[1] + threas,
                    point[2] - threas: point[2] + threas]
-        map_desc = self._to_shape(map_desc, (threas * 2, threas * 2, threas * 2))
+        if not (to_rotate is None):
+            degrees = to_rotate.as_euler('xyz', degrees=True)
+            z_rotated = ndimage.rotate(map_desc, degrees[2], (0, 1), reshape=False)
+            yz_rotated = ndimage.rotate(z_rotated, degrees[1], (0, 2), reshape=False)
+            xyz_rotated = ndimage.rotate(yz_rotated, degrees[0], (1, 2), reshape=False)
+        else:
+            xyz_rotated = map_desc
+        map_desc = self._to_shape(xyz_rotated, (threas * 2, threas * 2, threas * 2))
 
         return torch.tensor(map_desc, requires_grad=True), atoms_desc
