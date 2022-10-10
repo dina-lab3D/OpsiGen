@@ -9,6 +9,11 @@ import graph_builders
 import torch
 from scipy import ndimage
 from scipy.spatial.transform import Rotation as R
+from skimage.feature import canny
+import scipy.ndimage.filters as filters
+
+CRYO_FILE_TEMPLATE_A = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/a{}.mrc"
+
 
 class MapSeq:
     funcs = {
@@ -18,12 +23,12 @@ class MapSeq:
     def __init__(self, map_path, pdb_path, boxes_shape=(8,8,8)):
         self.map_path = map_path
         self.pdb_path = pdb_path
-        parser = Bio.PDB.PDBParser(PERMISSIVE=True, QUIET=True)
-        structure = parser.get_structure("7qti", self.pdb_path)
-        self.center = structure.center_of_mass()
+        # parser = Bio.PDB.PDBParser(PERMISSIVE=True, QUIET=True)
+        # structure = parser.get_structure("7qti", self.pdb_path)
+        # self.center = structure.center_of_mass()
         # structure.transform(rot=np.eye(3), tran=self.center)
-        print("Center of mass is ", self.center)
-        self.atoms = structure.get_atoms()
+        # print("Center of mass is ", self.center)
+        # self.atoms = structure.get_atoms()
         with mrcfile.open(self.map_path) as protein:
             self.map_data = protein.data
         self.boxes_x_size = boxes_shape[0]
@@ -61,9 +66,21 @@ class MapSeq:
                     if len(box) > threas:
                         self.good_boxes.append((i, j, k))
 
+    @staticmethod
+    def find_edges(map):
+        blured_img = filters.gaussian_filter(map, sigma=5)
+        laplace_img = filters.laplace(blured_img)
+        counts, vals = np.histogram(laplace_img, bins=25)
+        t = 0
+        for val in vals[::-1]:
+            if val > 0:
+                t = val
+        return np.argwhere(laplace_img > t)
+
     def preprocess(self):
-        self._divide_to_boxes()
-        self._find_good_boxes(15)
+        self.edges = self.find_edges(self.map_data)
+        # self._divide_to_boxes()
+        # self._find_good_boxes(15)
 
     def _create_descriptor_from_atoms(self, atoms, funcs_dict):
         res = np.array([])
@@ -94,16 +111,17 @@ class MapSeq:
         return atoms
 
     def get_interesting_point(self):
-        x_val = random.choice(range(self.boxes_x_size))
-        y_val = random.choice(range(self.boxes_y_size))
-        z_val = random.choice(range(self.boxes_z_size))
-        good_box = random.choice(self.good_boxes)
+        # x_val = random.choice(range(self.boxes_x_size))
+        # y_val = random.choice(range(self.boxes_y_size))
+        # z_val = random.choice(range(self.boxes_z_size))
+        # good_box = random.choice(self.good_boxes)
+        #
+        # x_val += good_box[0] * self.boxes_x_size
+        # y_val += good_box[1] * self.boxes_y_size
+        # z_val += good_box[2] * self.boxes_z_size
 
-        x_val += good_box[0] * self.boxes_x_size
-        y_val += good_box[1] * self.boxes_y_size
-        z_val += good_box[2] * self.boxes_z_size
-
-        return x_val, y_val, z_val
+        # return x_val, y_val, z_val
+        return random.choice(self.edges)
 
     @staticmethod
     def _to_shape(array, wanted_shape):

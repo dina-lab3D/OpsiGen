@@ -3,9 +3,27 @@ import numpy as np
 import pickle
 import models
 import torch
+from MapSeq import MapSeq
 from skimage.feature import match_descriptors
 import math
-import time
+import mrcfile
+
+import transformation_finder
+
+CRYO_FILE_TEMPLATE_A = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/a{}.mrc"
+CRYO_FILE_TEMPLATE_B = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/b{}.mrc"
+CRYO_FILE_TEMPLATE_C = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/c{}.mrc"
+CRYO_FILE_TEMPLATE_D = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/d{}.mrc"
+
+
+def is_empty_point(arr, threashold_for_density = 500):
+    volume = 1
+    for index in range(len(arr.shape)):
+        volume *= arr.shape[index]
+    # print("Above the mean values", np.sum(np.where(arr.detach().numpy() > np.mean(arr.detach().numpy()))))
+    if np.sum(np.where(arr > np.mean(arr))) < volume / 4:
+        return True
+    return False
 
 
 class DescriptorCreator:
@@ -37,8 +55,6 @@ class DescriptorCreator:
 
         return volume
 
-    def reshape(self, shape, arr):
-        return torch.tensor(arr).unsqueeze(dim=1)
 
     @staticmethod
     def cartesian_product(*arrays):
@@ -50,52 +66,37 @@ class DescriptorCreator:
         return arr.reshape(-1, la)
 
     @staticmethod
-    def generate_points(map, threas, grid_density):
-
-        x_length = map.shape[0]
-        y_length = map.shape[1]
-        z_length = map.shape[2]
-
-        x = np.linspace(0 + threas, x_length - threas, int(x_length / grid_density)).astype(np.int)
-        y = np.linspace(0 + threas, x_length - threas, int(x_length / grid_density)).astype(np.int)
-        z = np.linspace(0 + threas, x_length - threas, int(x_length / grid_density)).astype(np.int)
-
-        points = np.array(DescriptorCreator.cartesian_product(x, y, z))
-
-        counts, vals = np.histogram(map, bins=50)
-        t = vals[45]
-
+    def generate_patches(map, points, threas):
         res = {}
         for i, point in enumerate(points):
             patch = DescriptorCreator.cut_from_map(map, point, threas)
-            if np.max(patch) > t:
+            if not is_empty_point(patch):
+                # mrcfile.write(CRYO_FILE_TEMPLATE_A, patch, overwrite=True)
                 res[i] = patch
 
         return points[list(res.keys())], list(res.values())
 
     @staticmethod
     def cut_from_map(map, point, threas):
-        res = map[point[0] - threas:point[0] + threas, point[1] - threas: point[1] + threas,
+        unshaped_desc = map[point[0] - threas:point[0] + threas, point[1] - threas: point[1] + threas,
               point[2] - threas:point[2] + threas]
-        return res
 
-    def generate_descriptors(self, map, grid_density):
-        points, patches = self.generate_points(map, self.threas, grid_density)
-        map_descs = self.reshape(map.shape, np.array(patches))
-        bad_indexes = []
-        for i, desc in enumerate(map_descs.squeeze()):
-            if np.var(desc.detach().numpy()) < (10 ** (-4)):
-                bad_indexes.append(i)
+        desc = MapSeq._to_shape(unshaped_desc, (threas * 2, threas * 2, threas * 2))
+        return desc
+
+    def generate_descriptors(self, map, threas):
+        edges = MapSeq.find_edges(map)
+        chosen_points = edges[np.all(edges % int(self.threas / 2) == 0, axis=1)]
+        points, patches = self.generate_patches(map, chosen_points, self.threas)
+        map_descs = torch.tensor(np.array(patches)).unsqueeze(dim=1)
         model_descs = self.model(map_descs).squeeze().detach().numpy()
-        vol = self.volume(model_descs.shape)
-        final_descs = model_descs.reshape(model_descs.shape[0], int(vol / model_descs.shape[0]))
 
-        return bad_indexes, final_descs
+        return patches, model_descs, points
 
     @staticmethod
-    def calculate_correlation(points1, points2, rotation, translation, descs1, descs2):
-        points2_new = points1 @ rotation + translation
-        matches = match_descriptors(points2_new, points2, max_distance=20)
+    def calculate_correlation(points1, points2, descs1, descs2, rotation, translation):
+        points2_new = (rotation @ points1.T + translation).T
+        matches = match_descriptors(points2_new, points2, max_distance=15)
 
         if matches.shape[0] == 0:
             return math.inf
@@ -128,89 +129,114 @@ class DescriptorCreator:
         :return: [f, inlierIdx] where: f is the fit and inlierIdx are the indices of inliers
         """
 
-        ptNum = len(x)
-        thInlr = round(thInlrRatio * ptNum)
-
-        best_dist = math.inf
-        counter = 0
-        small_dist_th = 0.05
+        ptNum = x.shape[0]
+        best_correlation = math.inf
+        best_func = np.eye(3), np.ones(3)
         for i in range(iterNum):
-            counter += 1
-            permut1 = np.random.permutation(ptNum)
-            permut2 = np.random.permutation(ptNum)
-            sampleIdx1 = permut1[range(minPtNum)]
-            sampleIdx2 = permut2[range(minPtNum)]
-            rotation, translation = DescriptorCreator.calcPointBasedReg(x[sampleIdx1, :], y[sampleIdx2, :])
-            small_dist = funcDist(x[sampleIdx1, :], y[sampleIdx2, :], rotation,
-                                  translation, descs_x[sampleIdx1, :], descs_y[sampleIdx2, :])
-            while small_dist > small_dist_th:
-                permut1 = np.random.permutation(ptNum)
-                permut2 = np.random.permutation(ptNum)
-                sampleIdx1 = permut1[range(minPtNum)]
-                sampleIdx2 = permut2[range(minPtNum)]
-                rotation, translation = DescriptorCreator.calcPointBasedReg(x[sampleIdx1, :], y[sampleIdx2, :])
-                small_dist = funcDist(x[sampleIdx1, :], y[sampleIdx2, :], rotation,
-                                      translation, descs_x[sampleIdx1, :], descs_y[sampleIdx2, :])
-
-            dist = funcDist(x, y, rotation, translation, descs_x, descs_y)
-            if dist < best_dist:
-                best_dist = dist
-                print("Found better:")
-                print("Dist is :", dist)
-                print(rotation)
+            permut = np.random.permutation(ptNum)
+            sampleIdx = permut[range(minPtNum)]
+            func = DescriptorCreator.calcPointBasedReg(x[sampleIdx,:],y[sampleIdx,:])
+            if func is None:
+                continue
+            else:
+                rotation, translation = func
+            correlation = funcDist(x, y, descs_x, descs_y, rotation, translation)
+            # b = (dist <= thDist)
+            # r = np.array(range(b.shape[0]))
+            # inlier1 = r[b]
+            # inlrNum[i] = len(inlier1)
+            if correlation < best_correlation:
+                best_correlation = correlation
                 best_func = rotation, translation
-
-            print(counter)
-
+                print("New best function:", rotation, translation)
+                continue
 
         return best_func
 
+    # @staticmethod
+    # def index_to_centroid(shape, threas, index):
+    #     diameter = threas * 2
+    #     x_length = shape[0] / diameter
+    #     y_length = shape[1] / diameter
+    #     z_length = shape[2] / diameter
+    #
+    #     x = int(index / (y_length * z_length))
+    #     y = int((index - (y_length * z_length) * x) / y_length)
+    #     z = int(index % z_length)
+    #
+    #     return x * diameter + threas, y * diameter + threas, z * diameter + threas
+
     @staticmethod
-    def index_to_centroid(shape, threas, index):
-        diameter = threas * 2
-        x_length = shape[0] / diameter
-        y_length = shape[1] / diameter
-        z_length = shape[2] / diameter
+    def calcPointBasedReg(A, B):
+        A = A.T
+        B = B.T
+        assert A.shape == B.shape
 
-        x = int(index / (y_length * z_length))
-        y = int((index - (y_length * z_length) * x) / y_length)
-        z = int(index % z_length)
+        num_rows, num_cols = A.shape
+        if num_rows != 3:
+            raise Exception(f"matrix A is not 3xN, it is {num_rows}x{num_cols}")
 
-        return x * diameter + threas, y * diameter + threas, z * diameter + threas
+        num_rows, num_cols = B.shape
+        if num_rows != 3:
+            raise Exception(f"matrix B is not 3xN, it is {num_rows}x{num_cols}")
 
-    @staticmethod
-    def calcPointBasedReg(x, y):
-        centroid1 = x.mean(axis=0)
-        centroid2 = y.mean(axis=0)
+        # find mean column wise
+        centroid_A = np.mean(A, axis=1)
+        centroid_B = np.mean(B, axis=1)
 
-        centered_XPoints = x - centroid1
-        centered_YPoints = y - centroid2
+        # ensure centroids are 3x1
+        centroid_A = centroid_A.reshape(-1, 1)
+        centroid_B = centroid_B.reshape(-1, 1)
 
-        sigma = centered_YPoints.T @ centered_XPoints
-        U, _, Vt = np.linalg.svd(sigma)
+        # subtract mean
+        Am = A - centroid_A
+        Bm = B - centroid_B
 
-        rotation = U @ Vt
-        translation = -rotation @ centroid1 + centroid2
+        H = Am @ np.transpose(Bm)
 
-        return rotation, translation
+        # find rotation
+        U, S, Vt = np.linalg.svd(H)
+        R = Vt.T @ U.T
+
+        # special reflection case
+        if np.linalg.det(R) < 0:
+            return None
+
+        t = -R @ centroid_A + centroid_B
+
+        return R, t
 
     def preprocess(self):
-        bad_indexes1, descs1 = self.generate_descriptors(self.map1, int(self.threas / 3))
-        bad_indexes2, descs2 = self.generate_descriptors(self.map2, int(self.threas / 3))
+        # edges1 = MapSeq.find_edges(self.map1)
+        # edges2 = MapSeq.find_edges(self.map2)
+        # chosen_points1 = edges1[np.all(edges1 % int(self.threas / 4) == 0, axis=1)]
+        # chosen_points2 = edges2[np.all(edges2 % int(self.threas / 4) == 0, axis=1)]
+        patches1, descs1, points1 = self.generate_descriptors(self.map1, self.threas)
+        patches2, descs2, points2 = self.generate_descriptors(self.map2, self.threas)
 
-        good_indexes = [i for i in range(len(descs1)) if i not in list(set(bad_indexes1 + bad_indexes2))]
+        # points1 = points1[[i for i in range(len(descs1)) if i not in list(set(bad_indexes1))]]
+        # points2 = points2[[i for i in range(len(descs2)) if i not in list(set(bad_indexes2))]]
 
-        points1 = np.array(
-            [DescriptorCreator.index_to_centroid(self.map1.shape, self.threas, index) for index in good_indexes])
-        points2 = np.array(
-            [DescriptorCreator.index_to_centroid(self.map2.shape, self.threas, index) for index in good_indexes])
+        # points1 = np.array(
+        #     [DescriptorCreator.index_to_centroid(self.map1.shape, self.threas, index) for index in good_indexes])
+        # points2 = np.array(
+        #     [DescriptorCreator.index_to_centroid(self.map2.shape, self.threas, index) for index in good_indexes])
 
-        # matches = match_descriptors(descs1[good_indexes, :], descs2[good_indexes, :])
+        matches = match_descriptors(descs1, descs2, cross_check=True)
         #
-        # kp1 = points1[matches[:, 0]]
-        # kp2 = points2[matches[:, 1]]
+        kp1 = points1[matches[:, 0]]
+        kp2 = points2[matches[:, 1]]
+        for i in range(len(matches)):
+            # mrcfile.write(CRYO_FILE_TEMPLATE_A, patches1[matches[0][0]], overwrite=True)
+            # mrcfile.write(CRYO_FILE_TEMPLATE_B, patches2[matches[0][1]], overwrite=True)
+            print(np.linalg.norm(kp1[i] - kp2[i]))
 
-        rot, trans = self.ransac(points1, points2, descs1, descs2, DescriptorCreator.calculate_correlation, 3, 1000, 60, 0.0001)
-        print(rot, trans)
+        breakpoint()
+        # transformation_finder.find_transformation(points1, points2, descs1, descs2)
+        # mrcfile.write(CRYO_FILE_TEMPLATE_A, descs1[matches[0][0]], overwrite=True)
+        # mrcfile.write(CRYO_FILE_TEMPLATE_B, descs2[matches[0][1]], overwrite=True)
+
+        # rot, trans = self.ransac(points1, points2, descs1, descs2, DescriptorCreator.calculate_correlation, 3, 10000, 60, 0.0001)
+        # print(rot, trans)
 
         # self.ransac(descs1, descs2)

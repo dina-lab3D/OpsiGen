@@ -9,7 +9,7 @@ matplotlib.rcParams['lines.linewidth'] = 2.0
 ## PyTorch
 
 import torch.nn as nn
-# import torch.nn.functional as F
+import torch.nn.functional as F
 
 # Torchvision
 # import torch_geometric.nn as geom_nn
@@ -22,14 +22,14 @@ class CryoNet(nn.Module):
         super().__init__()
         self.kernel_size = 3
         layer_size = int((threas * 2 - (self.kernel_size - 1)) / 2)
-        self.conv_layer1 = self._conv_layer_set(1, 3)
+        self.conv_layer1 = self._conv_layer_set(1, 1)
         self.fc1 = nn.Linear(layer_size, 50)
-        self.conv_layer2 = self._conv_layer_set(3, 4)
+        self.conv_layer2 = self._conv_layer_set(1, 1)
         beginning_layer_size = int((layer_size - (self.kernel_size - 1)) / 2)
         last_layer_size = int((50 - (self.kernel_size - 1)) / 2)
-        self.fc2 = nn.Linear(last_layer_size, 10)
+        self.fc2 = nn.Linear(beginning_layer_size * beginning_layer_size * last_layer_size, 200)
         self.activation1 = nn.LeakyReLU()
-        self.fc3 = nn.Linear(4 * beginning_layer_size * beginning_layer_size * 10, 500)
+        self.fc3 = nn.Linear(200, 100)
 
     def forward(self, x):
         if len(x.shape) == 3:
@@ -37,10 +37,10 @@ class CryoNet(nn.Module):
         out = self.conv_layer1(x)
         out = self.fc1(out)
         out = self.conv_layer2(out)
-        out = self.fc2(out)
+        out = self.fc2(out.flatten(start_dim=1))
         out = self.activation1(out)
-        out = self.fc3(out.flatten())
-        return out.flatten()
+        out = self.fc3(out)
+        return F.normalize(out, dim=1)
 
     def _conv_layer_set(self, in_c, out_c):
         """
@@ -56,19 +56,3 @@ class CryoNet(nn.Module):
         )
         return conv_layer
 
-
-class ProteinNet(nn.Module):
-
-    def __init__(self, c_in, c_out):
-        super().__init__()
-        self.fc1 = nn.Linear(c_in, 45)
-        self.activation1 = nn.LeakyReLU()
-        self.fc2 = nn.Linear(45, c_out)
-        # self.activation2 = nn.LeakyReLU()
-        # self.fc3 = nn.Linear(45, c_out)
-
-    def forward(self, x):
-        out = self.fc1(x)
-        out = self.activation1(out)
-        out = self.fc2(out)
-        return out.flatten()
