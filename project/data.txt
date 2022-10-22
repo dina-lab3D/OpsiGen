@@ -1,0 +1,10 @@
+/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7um5.map /mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7um5.mrc
+/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7usw.map /mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7usw.mrc
+/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7usx.map /mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7usx.mrc
+/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7wsf.map /mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7wsf.mrc
+/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7wtt.map /mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7wtt.mrc
+/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7x9w.map /mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7x9w.mrc
+/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7zcu.map /mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7zcu.mrc
+/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7ze3.map /mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7ze3.mrc
+/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7zyy.map /mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7zyy.mrc
+/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/8e9g.map /mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/8e9g.mrc
