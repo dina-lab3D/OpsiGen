@@ -1,4 +1,6 @@
-import CubeGenerator
+import random
+
+from CubeGenerator import CubeGenerator
 import time
 import models
 import torch.optim as optim
@@ -7,140 +9,109 @@ import pickle
 import numpy as np
 import mrcfile
 from scipy.spatial.transform import Rotation as R
+from scipy.spatial.distance import cdist
+from train_utils import PerformanceStats, TrainerData
 
-PDB_PATH = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/pdb7qti.ent"
-CRYO_FILE1 = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/emd_14141.map"
-CRYO_FILE2 = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7qti.mrc"
 CRYO_FILE_TEMPLATE_A = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/a{}.mrc"
 CRYO_FILE_TEMPLATE_B = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/b{}.mrc"
 CRYO_FILE_TEMPLATE_C = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/c{}.mrc"
 CRYO_FILE_TEMPLATE_D = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/d{}.mrc"
 
 
-class PerformanceStats:
+class Trainer:
 
-    def __init__(self, reset_steps=1000):
-        self.correct = 1
-        self.wrong = 1
-        self.super_correct = 1
-        self.super_wrong = 1
-        self.step = 0
-        self.reset_steps = reset_steps
+    def __init__(self, trainer_data):
+        self.data = trainer_data
+        self.cube_generators = None
 
-    def update_stats(self, ratio):
-        if ratio < 1:
-            self.correct += 1
+        self.init_cube_generators()
+
+    def init_cube_generators(self):
+        self.cube_generators = {
+            CubeGenerator(path): CubeGenerator(self.data.path_dict[path]) for path in self.data.path_dict
+        }
+
+    def init_model(self):
+        if self.data.to_load:
+            cryo_net = pickle.load(open(self.data.model_path, 'rb'))
         else:
-            self.wrong += 1
+            cryo_net = models.CryoNet(self.data.threas).float()
 
-        if ratio > 4:
-            self.super_wrong += 1
-        if ratio < 0.25:
-            self.super_correct += 1
+        cryo_net.to(torch.device("cuda:0"))
+        cryo_net.zero_grad()
+        optimizer = optim.Adam(list(cryo_net.parameters()), lr=self.data.lr)
 
-    def advance(self):
-        self.step += 1
-        return self.step % self.reset_steps == 0
+        return cryo_net, optimizer
 
-    def print(self):
-        print("{:.2f}% success, {:.2f}% super success".format(float(self.correct) * 100 / (self.wrong + self.correct),
-                                                              float(self.super_correct) * 100 / (self.super_wrong + self.super_correct)))
+    def calculate_descriptors(self, cube_generators, num_points=20):
+        is_valid_points = False
 
+        descs_original = []
+        descs_fake = []
 
-def is_empty_point(arr, threashold_for_density = 500):
-    volume = 1
-    for index in range(len(arr.shape)):
-        volume *= arr.shape[index]
-    # print("Above the mean values", np.sum(np.where(arr.detach().numpy() > np.mean(arr.detach().numpy()))))
-    if np.sum(np.where(arr.detach().numpy() > np.mean(arr.detach().numpy()))) < volume / 8:
-        return True
-    return False
+        mat1 = R.random()
 
+        counter = 0
+        while not is_valid_points:
+            counter += 1
+            descs_original = []
+            descs_fake = []
+            points = []
+            for cube_generator in cube_generators:
+                points += [cube_generator.get_interesting_point() for _ in range(num_points)]
 
-def calculate_descriptors(cube_generator1, cube_generator2, threas):
-    desc1a, desc1b, desc2a, desc2b = None, None, None, None
-    is_valid_points = False
-    is_close_points = False
+            mask = np.triu_indices(num_points, num_points - 1)
+            dists = cdist(np.array(points), np.array(points))[mask]
+            if np.any(dists < self.data.threas / 2):
+                continue
 
-    mat1 = R.random()
+            for p in points:
+                descs_original.append(cube_generators[0].generate_descriptors(p, self.data.threas))
+                descs_fake.append(cube_generators[1].generate_descriptors(p, self.data.threas))  # , to_rotate=mat1)
 
-    while (not is_valid_points) or is_close_points:
-        point1 = cube_generator1.get_interesting_point()
-        point2 = cube_generator2.get_interesting_point()
-        if np.linalg.norm((np.array(point1) - np.array(point2))) < threas / 2:
-            is_close_points = True
-            continue
-        else:
-            is_close_points = False
-        desc1a, _ = cube_generator1.generate_descriptors(point1, threas)
-        desc1b, _ = cube_generator2.generate_descriptors(point1, threas, to_rotate=mat1)
-        desc2a, _ = cube_generator1.generate_descriptors(point2, threas)
-        desc2b, _ = cube_generator2.generate_descriptors(point2, threas, to_rotate=mat1)
+            is_valid_points = True
 
-        is_valid_points = not (is_empty_point(desc1b) or is_empty_point(desc2b) or is_empty_point(desc1a)
-                               or is_empty_point(desc2a))
+        return torch.stack(descs_original), torch.stack(descs_fake)
 
-    return desc1a, desc1b, desc2a, desc2b
+    def train(self):
 
+        # cube_generator1 = CubeGenerator.CubeGenerator(self.data.path1)
+        # cube_generator2 = CubeGenerator.CubeGenerator(self.data.path2)
+        cryo_net, optimizer = self.init_model()
 
-def calculate_loss(cryo_net, desc1a, desc1b, desc2a, desc2b, alpha=1.0):
-    similiarity_norm = torch.norm(cryo_net(desc1a) - cryo_net(desc1b)) + \
-                       torch.norm(cryo_net(desc2a) - cryo_net(desc2b))
-    difference_norm = torch.norm(cryo_net(desc1a) - cryo_net(desc2a)) + \
-                      torch.norm(cryo_net(desc1b) - cryo_net(desc2b))
-    loss = similiarity_norm - alpha * difference_norm
+        stats = PerformanceStats()
 
-    print("similiearity", similiarity_norm.item())
-    print("difference--", difference_norm.item())
-    print("alpha is ", alpha)
+        while True:
+            cube_generator_a = random.choice(list(self.cube_generators.keys()))
+            cube_generator_b = self.cube_generators[cube_generator_a]
+            descs = self.calculate_descriptors((cube_generator_a, cube_generator_b), self.data.threas)
+            loss, ratio = self.calculate_loss(cryo_net, descs)
+            stats.update_stats(ratio=ratio)
+            stats.print()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-    ratio = similiarity_norm.item() / difference_norm.item()
+            if stats.advance():
+                stats.reset()
+                print("Saving")
+                pickle.dump(cryo_net, open(self.data.model_path, 'wb'))
 
-    # if ratio > 4:
-    #     mrcfile.write(CRYO_FILE_TEMPLATE_A, desc1a.detach().numpy(), overwrite=True)
-    #     mrcfile.write(CRYO_FILE_TEMPLATE_B, desc1b.detach().numpy(), overwrite=True)
-    #     mrcfile.write(CRYO_FILE_TEMPLATE_C, desc2a.detach().numpy(), overwrite=True)
-    #     mrcfile.write(CRYO_FILE_TEMPLATE_D, desc2b.detach().numpy(), overwrite=True)
-    #     print("Bad points")
-    #     breakpoint()
-    #
-    # if ratio < 0.25:
-    #     mrcfile.write(CRYO_FILE_TEMPLATE_A, desc1a.detach().numpy(), overwrite=True)
-    #     mrcfile.write(CRYO_FILE_TEMPLATE_B, desc1b.detach().numpy(), overwrite=True)
-    #     mrcfile.write(CRYO_FILE_TEMPLATE_C, desc2a.detach().numpy(), overwrite=True)
-    #     mrcfile.write(CRYO_FILE_TEMPLATE_D, desc2b.detach().numpy(), overwrite=True)
-    #     print("Good points")
-    #     breakpoint()
-    return loss, similiarity_norm.item() / difference_norm.item()
+    def calculate_loss(self, cryo_net, descs):
+        patches_original, patches_fake = descs
+        patches_original = patches_original.unsqueeze(dim=1)
+        patches_fake = patches_fake.unsqueeze(dim=1)
+        num_points = patches_fake.shape[0]
+        descs_original = cryo_net(patches_original)
+        descs_fake = cryo_net(patches_fake)
+        dists = torch.cdist(descs_fake, descs_original)
+        similiarity_mask = np.eye(num_points)
+        difference_mask = np.triu(np.ones(num_points), 1)
+        similiarity_norm = torch.sum(dists[np.where(similiarity_mask)]) / np.sum(similiarity_mask)
+        difference_norm = torch.sum(dists[np.where(difference_mask)]) / np.sum(difference_mask)
 
+        loss = similiarity_norm - self.data.alpha * difference_norm
 
-def init_model(to_load, threas, path, lr):
-    if to_load:
-        cryo_net = pickle.load(open(path, 'rb'))
-    else:
-        cryo_net = models.CryoNet(threas).float()
-    cryo_net.zero_grad()
-    optimizer = optim.Adam(list(cryo_net.parameters()), lr=lr)
+        ratio = similiarity_norm.item() / difference_norm.item()
 
-    return cryo_net, optimizer
-
-
-def train(alpha, threas, to_load, lr):
-    cube_generator1 = CubeGenerator.CubeGenerator(CRYO_FILE1)
-    cube_generator2 = CubeGenerator.CubeGenerator(CRYO_FILE2)
-    cryo_net, optimizer = init_model(to_load, threas, "cryo_model.pckl", lr)
-
-    stats = PerformanceStats()
-
-    while True:
-        map_desc1a, map_desc1b, map_desc2a, map_desc2b = calculate_descriptors(cube_generator1, cube_generator2, threas)
-        loss, ratio = calculate_loss(cryo_net, map_desc1a, map_desc1b, map_desc2a, map_desc2b, alpha=alpha)
-        stats.update_stats(ratio=ratio)
-        stats.print()
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        if stats.advance():
-            print("Saving")
-            pickle.dump(cryo_net, open('cryo_model.pckl', 'wb'))
+        return loss, ratio

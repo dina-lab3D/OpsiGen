@@ -1,6 +1,6 @@
 from descriptor_creator import DescriptorCreator
 
-CRYO_FILE1 = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/emd_14141.map"
+CRYO_FILE1 = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7qti.map"
 CRYO_FILE2 = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/7qti.mrc"
 MODEL = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/project/cryo_model.pckl"
 

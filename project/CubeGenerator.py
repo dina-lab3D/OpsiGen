@@ -12,8 +12,6 @@ from scipy.spatial.transform import Rotation as R
 from skimage.feature import canny
 import scipy.ndimage.filters as filters
 
-CRYO_FILE_TEMPLATE_A = "/mnt/c/Users/zlils/Documents/university/biology/cryo-folding/cryo-em-data/a{}.mrc"
-
 
 class CubeGenerator:
 
@@ -25,9 +23,9 @@ class CubeGenerator:
 
     @staticmethod
     def find_edges(map):
-        blured_img = filters.gaussian_filter(map, sigma=5)
+        blured_img = filters.gaussian_filter(map, sigma=10)
         laplace_img = filters.laplace(blured_img)
-        counts, vals = np.histogram(laplace_img, bins=25)
+        counts, vals = np.histogram(laplace_img, bins=10)
         t = 0
         for val in vals[::-1]:
             if val > 0:
@@ -53,7 +51,6 @@ class CubeGenerator:
                       )
 
     def generate_descriptors(self, point, threas, to_rotate=None):
-        atoms_desc = None
 
         map_desc = self.map_data[point[0] - threas: point[0] + threas, point[1] - threas: point[1] + threas,
                    point[2] - threas: point[2] + threas]
@@ -66,4 +63,4 @@ class CubeGenerator:
             xyz_rotated = map_desc
         map_desc = self._to_shape(xyz_rotated, (threas * 2, threas * 2, threas * 2))
 
-        return torch.tensor(map_desc, requires_grad=True), atoms_desc
+        return torch.tensor(map_desc, requires_grad=True)

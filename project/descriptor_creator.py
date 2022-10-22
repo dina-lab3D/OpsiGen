@@ -3,9 +3,10 @@ import numpy as np
 import pickle
 import models
 import torch
-from MapSeq import MapSeq
+from CubeGenerator import CubeGenerator
 from skimage.feature import match_descriptors
 import math
+import scipy
 import mrcfile
 
 import transformation_finder
@@ -81,12 +82,12 @@ class DescriptorCreator:
         unshaped_desc = map[point[0] - threas:point[0] + threas, point[1] - threas: point[1] + threas,
               point[2] - threas:point[2] + threas]
 
-        desc = MapSeq._to_shape(unshaped_desc, (threas * 2, threas * 2, threas * 2))
+        desc = CubeGenerator._to_shape(unshaped_desc, (threas * 2, threas * 2, threas * 2))
         return desc
 
     def generate_descriptors(self, map, threas):
-        edges = MapSeq.find_edges(map)
-        chosen_points = edges[np.all(edges % int(self.threas / 2) == 0, axis=1)]
+        edges = CubeGenerator.find_edges(map)
+        chosen_points = edges[np.random.permutation(edges.shape[0])][:4000]
         points, patches = self.generate_patches(map, chosen_points, self.threas)
         map_descs = torch.tensor(np.array(patches)).unsqueeze(dim=1)
         model_descs = self.model(map_descs).squeeze().detach().numpy()
@@ -206,6 +207,16 @@ class DescriptorCreator:
 
         return R, t
 
+    def grade_match(self, descs1, descs2, points1, points2, close_points_threas, accuracy_in_voxels):
+        dists = scipy.spatial.distance.cdist(descs1, descs2)
+        close_args = np.argpartition(dists, close_points_threas, axis=1)
+        top_points = []
+        for i in range(points1.shape[0]):
+            top_points.append(scipy.spatial.distance.cdist([points1[i]], points2[close_args[i, :close_points_threas]]))
+
+        return np.sum(np.any(np.array(top_points).squeeze() < accuracy_in_voxels, axis=1)) / len(top_points)
+
+
     def preprocess(self):
         # edges1 = MapSeq.find_edges(self.map1)
         # edges2 = MapSeq.find_edges(self.map2)
@@ -214,6 +225,9 @@ class DescriptorCreator:
         patches1, descs1, points1 = self.generate_descriptors(self.map1, self.threas)
         patches2, descs2, points2 = self.generate_descriptors(self.map2, self.threas)
 
+        fraction = self.grade_match(descs1, descs2, points1, points2, close_points_threas=20, accuracy_in_voxels=4)
+
+        print("{}% are good points".format(fraction * 100))
         # points1 = points1[[i for i in range(len(descs1)) if i not in list(set(bad_indexes1))]]
         # points2 = points2[[i for i in range(len(descs2)) if i not in list(set(bad_indexes2))]]
 
@@ -222,16 +236,16 @@ class DescriptorCreator:
         # points2 = np.array(
         #     [DescriptorCreator.index_to_centroid(self.map2.shape, self.threas, index) for index in good_indexes])
 
-        matches = match_descriptors(descs1, descs2, cross_check=True)
-        #
-        kp1 = points1[matches[:, 0]]
-        kp2 = points2[matches[:, 1]]
-        for i in range(len(matches)):
-            # mrcfile.write(CRYO_FILE_TEMPLATE_A, patches1[matches[0][0]], overwrite=True)
-            # mrcfile.write(CRYO_FILE_TEMPLATE_B, patches2[matches[0][1]], overwrite=True)
-            print(np.linalg.norm(kp1[i] - kp2[i]))
+        # matches = match_descriptors(descs1, descs2, cross_check=True)
+        # # #
+        # kp1 = points1[matches[:, 0]]
+        # kp2 = points2[matches[:, 1]]
+        # for i in range(len(matches)):
+        #     #     mrcfile.write(CRYO_FILE_TEMPLATE_A, patches1[matches[i][0]], overwrite=True)
+        #     #     mrcfile.write(CRYO_FILE_TEMPLATE_B, patches2[matches[i][1]], overwrite=True)
+        #     print(np.linalg.norm(kp1[i] - kp2[i]))
+        # breakpoint()
 
-        breakpoint()
         # transformation_finder.find_transformation(points1, points2, descs1, descs2)
         # mrcfile.write(CRYO_FILE_TEMPLATE_A, descs1[matches[0][0]], overwrite=True)
         # mrcfile.write(CRYO_FILE_TEMPLATE_B, descs2[matches[0][1]], overwrite=True)
