@@ -27,9 +27,11 @@ class CryoNet(nn.Module):
         self.conv_layer2 = self._conv_layer_set(1, 1)
         beginning_layer_size = int((layer_size - (self.kernel_size - 1)) / 2)
         last_layer_size = int((50 - (self.kernel_size - 1)) / 2)
-        self.fc2 = nn.Linear(beginning_layer_size * beginning_layer_size * last_layer_size, 200)
+        self.fc2 = nn.Linear(beginning_layer_size * beginning_layer_size * last_layer_size, 1000)
         self.activation1 = nn.LeakyReLU()
-        self.fc3 = nn.Linear(200, 100)
+        self.fc3 = nn.Linear(1000, 400)
+        self.activation2 = nn.LeakyReLU()
+        self.fc4 = nn.Linear(400, 100)
 
     def forward(self, x):
         if len(x.shape) == 3:
@@ -40,6 +42,8 @@ class CryoNet(nn.Module):
         out = self.fc2(out.flatten(start_dim=1))
         out = self.activation1(out)
         out = self.fc3(out)
+        out = self.activation1(out)
+        out = self.fc4(out)
         return F.normalize(out, dim=1)
 
     def _conv_layer_set(self, in_c, out_c):
