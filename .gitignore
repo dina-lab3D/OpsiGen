@@ -3,4 +3,6 @@
 /lib/
 /bin/
 /share/
+/include/
+/etc/
 pyvenv.cfg

@@ -5,7 +5,6 @@ import pandas as pd
 import torch
 import pdb_parser
 
-FILE_PATH = '/mnt/c/Users/zlils/Documents/university/biology/rhodopsins/excel/data.xlsx'
 
 
 # a simple custom collate function, just to show the idea
