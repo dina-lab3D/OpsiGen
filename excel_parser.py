@@ -1,8 +1,9 @@
 import pandas as pd
 import os
 import numpy as np
-from BIO import PDB
+from Bio import PDB
 from scipy.spatial import distance
+
 
 EXCEL_PATH = "/cs/labs/dina/meitar/rhodopsins/excel/data.xlsx"
 
@@ -31,20 +32,23 @@ def entry_to_pdb_name(entry, id, path):
     return "my name"
 
 
-def entry_to_distance_matrix(entry, id, path, parser, threas):
-    name = entry_to_pdb_name(entry, id, path)
-    struct = parser.get_structure(id, name + '.pdb')
+def file_to_distance_matrix(input_path, output_path, parser, threas):
+    struct = parser.get_structure(input_path, input_path)
     atoms = struct.get_atoms()
-    coords = np.array([atom.coord for atom in atoms]).astype(np.int16)
+    coords = np.array([atom.coord for atom in atoms]).astype(np.float32)
     dists = distance.cdist(coords, coords)
-    dists[dists < threas] = -1
-    np.savez(name + '.npz', dists)
+    # dists[dists < threas] = -1
+    np.save(output_path, dists)
 
 
-def generate_distance_matrices(df, path):
+def generate_distance_matrices_from_folder(input_path, output_path):
     parser = PDB.PDBParser()
-    for i in range(len(df)):
-        entry_to_distance_matrix(df.iloc[i], i, path, parser, 16)
+    for (dirpath, dirnames, filenames) in os.walk(input_path):
+        for filename in filenames:
+            pdb_path = os.path.join(dirpath, filename)
+            npy_path = os.path.join(output_path, (filename).replace('.pdb', '_dists.npy'))
+            file_to_distance_matrix(pdb_path, npy_path, parser, 16)
+            # print(pdb_path, npz_path)
 
 
 def generate_fasta_files(df, path):
@@ -52,7 +56,9 @@ def generate_fasta_files(df, path):
         entry_to_fasta(df.iloc[i], i, path)
 
 def main():
-    df = pd.read_excel(EXCEL_PATH)
+    generate_distance_matrices_from_folder("/mnt/c/Users/zlils/Documents/university/biology/rhodopsins/pdbs/",
+                                           "/mnt/c/Users/zlils/Documents/university/biology/rhodopsins/results/")
+    # df = pd.read_excel(EXCEL_PATH)
     # generate_fasta_files(df, FASTAS_PATH)
 
 if __name__ == "__main__":
