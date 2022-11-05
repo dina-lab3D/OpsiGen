@@ -1,0 +1,6 @@
+FASTAS_PATH='/cs/labs/dina/meitar/rhodopsins/fastas/'
+cd $FASTAS_PATH
+for d in *; do
+	echo $d
+	/cs/labs/dina/meitar/alphafold_env/bin/python3 /sci/labs/dina/dina/collabFold_script.py $d
+done
