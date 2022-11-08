@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from itertools import product
+import numpy as np
 
 # Torchvision
 import torch_geometric.nn as geom_nn
@@ -66,23 +67,25 @@ class GATModel(nn.Module):
             nn.Linear(c_hidden, c_out)
         )
 
-    def forward(self, data):
+    def forward(self, features, edge_weights, threashold=0):
         """
         Inputs:
             x - Input features per node
             edge_index - List of vertex index pairs representing the edges in the graph (PyTorch geometric notation)
         """
 
-        x, edge_index, batch_idx, edge_weights = data.x, data.edge_index, data.batch, data.edge_attr
-        x1 = self.bn1(self.conv1(x, edge_index, edge_weights))
+        flatten_weights = torch.tensor(edge_weights[edge_weights > threashold]).double()
+        edge_index = torch.tensor(np.argwhere(edge_weights > threashold)).T
+        features = torch.tensor(features).double()
+        x1 = self.bn1(self.conv1(features, edge_index, flatten_weights))
         nn.ELU(x1, inplace=True)
-        x2 = self.bn2(self.conv2(x1, edge_index, edge_weights)) + x1  # skip connection
+        x2 = self.bn2(self.conv2(x1, edge_index, flatten_weights)) + x1  # skip connection
         nn.ELU(x2, inplace=True)
-        x3 = self.bn3(self.conv3(x2, edge_index, edge_weights))
-        x3 = geom_nn.global_mean_pool(x3, batch_idx) # aggregate average pooling
+        x3 = self.bn3(self.conv3(x2, edge_index, flatten_weights))
         x4 = self.head(x3)
+        x5 = torch.mean(input=x4, axis=-2)
 
-        return x4
+        return x5
 
 
 class ConvModel(nn.Module):
