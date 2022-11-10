@@ -1,10 +1,6 @@
 from torch.utils.data import Dataset, DataLoader
-import os
-from Bio import PDB
 import numpy as np
 import pandas as pd
-import torch
-import pdb_parser
 import excel_parser
 from dataclasses import dataclass
 
@@ -13,21 +9,6 @@ FILE_PATH = './excel/data.xlsx'
 
 
 # a simple custom collate function, just to show the idea
-def my_collate(batch):
-    result = []
-    for graph in batch:
-        features = graph[0]
-        dists = graph[1]
-        lmax = batch[2]
-    
-    return features, dists, lmax
-def my_collate(batch):
-    breakpoint()
-    data = [pdb_parser.build_graph_from_atoms(item[0]) for item in batch]
-    target = [item[1] for item in batch]
-    target = torch.LongTensor(target)
-    return [data, target]
-
 
 @dataclass
 class PDBDatasetConfig:
