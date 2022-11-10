@@ -1,6 +1,5 @@
 from scipy.spatial import distance
 
-import networkx as nx
 import numpy as np
 import torch
 

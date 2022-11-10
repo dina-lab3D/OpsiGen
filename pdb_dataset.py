@@ -22,9 +22,9 @@ def my_collate(batch):
 
 @dataclass
 class PDBDatasetConfig:
-    excel_path = './excel/data.xlsx'
-    graph_dists_path = './graphs/'
-    graph_features_path = './features/'
+    excel_path = '/cs/labs/dina/meitar/rhodopsins/excel/data.xlsx'
+    graph_dists_path = '/cs/labs/dina/meitar/rhodopsins/graphs/'
+    graph_features_path = '/cs/labs/dina/meitar/rhodopsins/features/'
 
 
 class PDBDataset(Dataset):
@@ -49,19 +49,25 @@ class PDBDataset(Dataset):
     def read_graph(dists_file_name, features_file_name):
         dists = None
         features = None
+        breakpoint()
         try:
             dists = np.load(dists_file_name)
-            features = np.load(features_file_name)
+            print("dists successful - {}".format(dists_file_name))
         except FileNotFoundError:
-            print("failed to parse {} and {}".format(dists_file_name, features_file_name))
+            print("failed to parse {}".format(dists_file_name))
 
+        try:
+            features = np.load(features_file_name)
+            print("dists successful - {}".format(features_file_name))
+        except FileNotFoundError:
+            print("failed to parse {}".format(features_file_name))
         return dists, features
 
     def __getitem__(self, idx):
         # name = self.get_category('Name')[idx]
         entry = self.excel_data.iloc[idx]
         dists_file_names = excel_parser.entry_to_dists_file_names(entry, idx, self.config.graph_dists_path)
-        features_file_names = excel_parser.entry_to_features_file_names(entry, idx, self.config.graph_dists_path)
+        features_file_names = excel_parser.entry_to_features_file_names(entry, idx, self.config.graph_features_path)
         dists = None
         features = None
         for i in range(5):
