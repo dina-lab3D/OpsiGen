@@ -14,6 +14,14 @@ FILE_PATH = './excel/data.xlsx'
 
 # a simple custom collate function, just to show the idea
 def my_collate(batch):
+    result = []
+    for graph in batch:
+        features = graph[0]
+        dists = graph[1]
+        lmax = batch[2]
+    
+    return features, dists, lmax
+def my_collate(batch):
     breakpoint()
     data = [pdb_parser.build_graph_from_atoms(item[0]) for item in batch]
     target = [item[1] for item in batch]
@@ -50,7 +58,6 @@ class PDBDataset(Dataset):
     def read_graph(dists_file_name, features_file_name):
         dists = None
         features = None
-        breakpoint()
         try:
             dists = np.load(dists_file_name)
             print("dists successful - {}".format(dists_file_name))
@@ -84,10 +91,9 @@ class PDBDataset(Dataset):
 
 def main():
     dataset = PDBDataset(PDBDatasetConfig())
-    dataloader = DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=my_collate)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
     for batch in dataloader:
         print(batch)
-        breakpoint()
 
 
 if __name__ == "__main__":

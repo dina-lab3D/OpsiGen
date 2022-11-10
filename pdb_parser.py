@@ -133,7 +133,6 @@ def encode_atom(atom):
 
 def build_graph_from_atoms(atoms):
     coords = np.array([atom.coord for atom in atoms]).astype(np.int16)
-    breakpoint()
     dists = distance.cdist(coords, coords)
     encodings = torch.tensor(np.array([encode_atom(atom) for atom in atoms]), requires_grad=True)
     return dists, encodings.to(torch.float32)
