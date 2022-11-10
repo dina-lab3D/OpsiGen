@@ -14,6 +14,17 @@ def generate_fasta_name(entry, id, path):
     return str(id) + '-' + entry['Name'].replace('/','.').replace(' ', '_') + '.fasta'
 
 
+def entry_to_dists_file_names(entry, id, path):
+    dist_file_name_format = entry['Name'].replace('/', '-').replace(' ', '') + '_' + entry['Wildtype'] + '_' + str(id) + '_' + 'unrelaxed_rank_1_model_{}_dists.npy'
+    return [path + dist_file_name_format.format(i) for i in range(1, 6)]
+
+
+def entry_to_features_file_names(entry, id, path):
+    features_file_names_format = entry['Name'].replace('/', '-').replace(' ', '') + '_' + entry['Wildtype'] + '_' + str(
+        id) + '_' + 'unrelaxed_rank_1_model_{}.npy'
+    return [path + features_file_names_format.format(i) for i in range(1, 6)]
+
+
 def entry_to_fasta(entry, id, path):
     FIELDS = ['Name', 'Wildtype']
     unique_id = '|'.join([entry[field] for field in FIELDS] + [str(id)]).replace(' ','').replace('/','-')
@@ -54,6 +65,7 @@ def generate_distance_matrices_from_folder(input_path, output_path):
 def generate_fasta_files(df, path):
     for i in range(len(df)):
         entry_to_fasta(df.iloc[i], i, path)
+
 
 def main():
     generate_distance_matrices_from_folder("/mnt/c/Users/zlils/Documents/university/biology/rhodopsins/pdbs/",

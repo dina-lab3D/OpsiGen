@@ -115,7 +115,6 @@ class ConvModel(nn.Module):
         self.lin1 = nn.Linear(2 * c_hidden, c_hidden) # set2set doubles dims
         self.lin2 = nn.Linear(c_hidden, c_out)
 
-
     def forward(self, protein):
         """
         Inputs:
@@ -140,6 +139,7 @@ class ConvModel(nn.Module):
         breakpoint()
 
         return x
+
 
 class GATConvModel(nn.Module):
     def __init__(self, c_in, c_hidden, c_out, heads=10, dp_rate=0.1, lstm_steps=10, num_layers=2, edge_dim=1, **kwargs):
