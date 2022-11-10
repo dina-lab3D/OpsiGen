@@ -14,6 +14,7 @@ FILE_PATH = './excel/data.xlsx'
 
 # a simple custom collate function, just to show the idea
 def my_collate(batch):
+    breakpoint()
     data = [pdb_parser.build_graph_from_atoms(item[0]) for item in batch]
     target = [item[1] for item in batch]
     target = torch.LongTensor(target)
@@ -83,7 +84,7 @@ class PDBDataset(Dataset):
 
 def main():
     dataset = PDBDataset(PDBDatasetConfig())
-    dataloader = DataLoader(dataset, batch_size=2, shuffle=True) #, collate_fn=my_collate)
+    dataloader = DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=my_collate)
     for batch in dataloader:
         print(batch)
         breakpoint()
