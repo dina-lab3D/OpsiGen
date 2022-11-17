@@ -11,7 +11,7 @@ from torch_geometric.nn.norm import BatchNorm
 
 class MLPModel(nn.Module):
 
-    def __init__(self, c_in, c_hidden, c_out, num_layers=2, dp_rate=0.1):
+    def __init__(self, c_in, c_hidden, c_out, device, num_layers=2, dp_rate=0.1):
         """
         Inputs:
             c_in - Dimension of input features
@@ -32,6 +32,7 @@ class MLPModel(nn.Module):
             in_channels = c_hidden
         layers += [nn.Linear(in_channels, c_out)]
         self.layers = nn.Sequential(*layers)
+        self.device = device
 
     def forward(self, x, *args, **kwargs):
         """
@@ -43,7 +44,7 @@ class MLPModel(nn.Module):
 
 class GATModel(nn.Module):
 
-    def __init__(self, c_in, c_hidden, c_out, dp_rate=0.1, heads1=4, heads2=4, heads3=6, edge_dim=1, **kwargs):
+    def __init__(self, c_in, c_hidden, c_out, device, dp_rate=0.1, heads1=4, heads2=4, heads3=6, edge_dim=1, **kwargs):
         """
         Inputs:
             c_in - Dimension of input features
@@ -56,6 +57,7 @@ class GATModel(nn.Module):
         """
         super().__init__()
         GAT = geom_nn.GATConv
+        self.device = device
         self.conv1 = GAT(c_in, c_hidden, heads=heads1, edge_dim=edge_dim)
         self.bn1 = BatchNorm(c_hidden*heads1)
         self.conv2 = GAT(c_hidden*heads1, c_hidden, heads=heads2, edge_dim=edge_dim)
@@ -73,10 +75,16 @@ class GATModel(nn.Module):
             x - Input features per node
             edge_index - List of vertex index pairs representing the edges in the graph (PyTorch geometric notation)
         """
+        NUM_FEATURES = 18
+        flatten_weights_array = edge_weights.squeeze()[edge_weights.squeeze() < threashold]
+        edge_index_array = np.argwhere(edge_weights.squeeze() < threashold)
+        features_array = features.reshape((features.shape[0], NUM_FEATURES))
 
-        flatten_weights = torch.tensor(edge_weights[edge_weights > threashold]).double()
-        edge_index = torch.tensor(np.argwhere(edge_weights > threashold)).T
-        features = torch.tensor(features).double()
+        flatten_weights = torch.tensor(flatten_weights_array, device=self.device).double()
+        edge_index = torch.tensor(edge_index_array, device=self.device)
+        features = torch.tensor(features_array, device=self.device).double()
+
+        print(flatten_weights.shape, edge_index.shape, features.shape)
         x1 = self.bn1(self.conv1(features, edge_index, flatten_weights))
         nn.ELU(x1, inplace=True)
         x2 = self.bn2(self.conv2(x1, edge_index, flatten_weights)) + x1  # skip connection

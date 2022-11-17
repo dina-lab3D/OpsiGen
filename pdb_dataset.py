@@ -50,7 +50,7 @@ class PDBDataset(Dataset):
             print("dists successful - {}".format(features_file_name))
         except FileNotFoundError:
             print("failed to parse {}".format(features_file_name))
-        return dists, features
+        return features, dists
 
     def __getitem__(self, idx):
         # name = self.get_category('Name')[idx]
@@ -59,15 +59,15 @@ class PDBDataset(Dataset):
         features_file_names = excel_parser.entry_to_features_file_names(entry, idx, self.config.graph_features_path)
         dists = None
         features = None
-        for i in range(5):
-            dists, features = PDBDataset.read_graph(dists_file_names[i], features_file_names[i])
+        for i in range(len(dists_file_names)):
+            features, dists = PDBDataset.read_graph(dists_file_names[i], features_file_names[i])
             if (not (dists is None)) and (not (features is None)):
                 break
 
         lmax = self.get_category('lmax')[idx]
         if dists is None or features is None:
             return [], [], 0
-        return dists, features, lmax
+        return features, dists, lmax
 
 
 def main():

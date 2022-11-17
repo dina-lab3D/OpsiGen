@@ -10,4 +10,6 @@
 /graphs/
 /features/
 /results/
+/pdb_validator/
+/protein_bank_pdbs/
 pyvenv.cfg
