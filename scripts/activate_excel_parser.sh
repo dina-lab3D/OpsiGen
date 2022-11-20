@@ -6,5 +6,5 @@ module load python
 module load cuda/11.4
 module load cudnn/8.2.2
 echo "2"
-python -u train.py
+python -u excel_parser.py
 echo "3"

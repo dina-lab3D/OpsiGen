@@ -41,15 +41,13 @@ class PDBDataset(Dataset):
         features = None
         try:
             dists = np.load(dists_file_name)
-            print("dists successful - {}".format(dists_file_name))
         except FileNotFoundError:
-            print("failed to parse {}".format(dists_file_name))
+            pass
 
         try:
             features = np.load(features_file_name)
-            print("dists successful - {}".format(features_file_name))
         except FileNotFoundError:
-            print("failed to parse {}".format(features_file_name))
+            pass
         return features, dists
 
     def __getitem__(self, idx):
@@ -66,6 +64,10 @@ class PDBDataset(Dataset):
 
         lmax = self.get_category('lmax')[idx]
         if dists is None or features is None:
+            if dists is None:
+                print("dists is None")
+            else:
+                print("features is None")
             return [], [], 0
         return features, dists, lmax
 

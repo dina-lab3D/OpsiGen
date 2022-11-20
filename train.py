@@ -17,33 +17,43 @@ FILE_PATH = '/mnt/c/Users/zlils/Documents/university/biology/rhodopsins/excel/da
 
 def main():
     print("Hello!")
+    print(torch.cuda.is_available())
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     to_load = True
     if to_load:
         with open('model.pckl', 'rb') as f:
             model = pickle.load(f).to(device)
     else:
-        model = models.GATModel(18, 15, 1, device).to(device)
-    optimizer = optim.AdamW(model.parameters(), lr=1)
+        model = models.GATModel(18, 200, 200, device).to(device)
+    optimizer = optim.AdamW(model.parameters(), lr=0.0001)
     dataset = PDBDataset(PDBDatasetConfig())
     dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
     print("starting loop")
+    loss_sum = 0
     index = 0
-    for graph in dataloader:
-        index += 1
-        if graph[2] == 0:
-            continue
-        if index % 15 == 0:
-            with open('model.pckl', 'wb') as f:
-                pickle.dump(model, f)
-            print("saving")
-        else:
+    while True:
+        for graph in dataloader:
+            index += 1
+            if graph[2] == 0:
+                print("skipping")
+                continue
+            if index % 100 == 0:
+                loss_sum = 0
+                index = 1
+                with open('model.pckl', 'wb') as f:
+                    pickle.dump(model, f)
+                print("saving")
+
             optimizer.zero_grad()
-            result = model.double().forward(graph[0], graph[1], 6)
-            loss = torch.norm(result - graph[2])
-            print(result, graph[2])
+            result = model.double().forward(graph[0], graph[1], 10)
+            loss = torch.norm(result - graph[2].to(device))
+            loss_sum += loss.item()
+            print(result.item(), graph[2].item(),loss_sum / index, result.shape)
             loss.backward()
             optimizer.step()
+
+            if loss.item() > 1000:
+                print("error on", graph[2].item())
 
 
 if __name__ == "__main__":

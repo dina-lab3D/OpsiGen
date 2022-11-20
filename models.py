@@ -58,15 +58,15 @@ class GATModel(nn.Module):
         super().__init__()
         GAT = geom_nn.GATConv
         self.device = device
-        self.conv1 = GAT(c_in, c_hidden, heads=heads1, edge_dim=edge_dim)
-        self.bn1 = BatchNorm(c_hidden*heads1)
-        self.conv2 = GAT(c_hidden*heads1, c_hidden, heads=heads2, edge_dim=edge_dim)
+        self.conv1 = GAT(c_in, c_hidden, edge_dim=edge_dim)
+        self.bn1 = BatchNorm(c_hidden)
+        self.conv2 = GAT(c_hidden, c_hidden, edge_dim=edge_dim)
         self.bn2 = BatchNorm(c_hidden*heads2)
-        self.conv3 = GAT(c_hidden*heads2, c_hidden, heads=heads3, edge_dim=edge_dim, concat=False)
+        self.conv3 = GAT(c_hidden, c_out, edge_dim=edge_dim, concat=False)
         self.bn3 = BatchNorm(c_hidden)
-        self.head = nn.Sequential(
+        self.l1 = nn.Sequential(
             nn.Dropout(dp_rate),
-            nn.Linear(c_hidden, c_out)
+            nn.Linear(c_out, 1)
         )
 
     def forward(self, features, edge_weights, threashold=0):
@@ -76,22 +76,24 @@ class GATModel(nn.Module):
             edge_index - List of vertex index pairs representing the edges in the graph (PyTorch geometric notation)
         """
         NUM_FEATURES = 18
-        flatten_weights_array = edge_weights.squeeze()[edge_weights.squeeze() < threashold]
-        edge_index_array = np.argwhere(edge_weights.squeeze() < threashold)
-        features_array = features.reshape((features.shape[0], NUM_FEATURES))
+        flatten_weights_array = edge_weights.squeeze()[edge_weights.squeeze() > 1 / threashold]
+        edge_index_array = np.argwhere(edge_weights.squeeze() > 1 / threashold)
+        features_array = features.squeeze()
 
         flatten_weights = torch.tensor(flatten_weights_array, device=self.device).double()
         edge_index = torch.tensor(edge_index_array, device=self.device)
         features = torch.tensor(features_array, device=self.device).double()
 
-        print(flatten_weights.shape, edge_index.shape, features.shape)
-        x1 = self.bn1(self.conv1(features, edge_index, flatten_weights))
+        x1 = self.conv1(features, edge_index, flatten_weights)
         nn.ELU(x1, inplace=True)
-        x2 = self.bn2(self.conv2(x1, edge_index, flatten_weights)) + x1  # skip connection
+        x2 = self.conv2(x1, edge_index, flatten_weights)  # skip connection
         nn.ELU(x2, inplace=True)
-        x3 = self.bn3(self.conv3(x2, edge_index, flatten_weights))
-        x4 = self.head(x3)
-        x5 = torch.mean(input=x4, axis=-2)
+        x3 = self.conv3(x2, edge_index, flatten_weights)
+        nn.ELU(x3, inplace=True)
+        x4 = torch.norm(x3, dim=-2, p=4)
+        x5 = self.l1(x4)
+        # x5 = torch.mean(input=x2, axis=-2)
+        # x5 = torch.max(self.head(x3))
 
         return x5
 

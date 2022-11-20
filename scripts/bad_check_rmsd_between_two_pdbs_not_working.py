@@ -1,8 +1,9 @@
 import Bio.PDB
 
-FIRST_PDB_PATH = "/cs/labs/dina/meitar/rhodopsins/pdbs/SRII.-Rh225-253_NpSRII_745_unrelaxed_rank_1_model_5.pdb"
 
-SECOND_PDB_PATH = "/cs/labs/dina/meitar/rhodopsins/protein_bank_pdbs/744-SRII..Rh225-252.pdb"
+FIRST_PDB_PATH = "../pdbs/GRNTQ-SS-Y88L_GR_427_unrelaxed_rank_1_model_3.pdb"
+
+SECOND_PDB_PATH = "../pdbs/GRNTQ-SS-Y88L_GR_427_unrelaxed_rank_4_model_2.pdb"
 
 def main():
     # Start the parser
@@ -22,12 +23,12 @@ def main():
     ref_atoms = [atom for atom in ref_model.get_atoms()]
     sample_atoms = [atom for atom in sample_model.get_atoms()]
 
-    min_length = min(len(ref_atoms), len(sample_atoms))
+    # min_length = min(len(ref_atoms), len(sample_atoms))
 
 
     # Now we initiate the superimposer:
     super_imposer = Bio.PDB.Superimposer()
-    super_imposer.set_atoms(ref_atoms[:min_length], sample_atoms[:min_length])
+    super_imposer.set_atoms(ref_atoms, sample_atoms)
     super_imposer.apply(sample_model.get_atoms())
 
     # Print RMSD:

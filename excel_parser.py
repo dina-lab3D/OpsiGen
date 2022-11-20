@@ -25,7 +25,7 @@ def entry_to_dists_file_names(entry, id, path):
 
 def entry_to_features_file_names(entry, id, path):
     features_file_names_format = entry['Name'].replace('/', '-').replace(' ', '') + '_' + entry['Wildtype'] + '_' + str(
-        id) + '_' + 'unrelaxed_rank_{}_model_{}.npz'
+        id) + '_' + 'unrelaxed_rank_{}_model_{}.npy'
     result = []
     for i in range(1,6):
         for j in range(1,6):
@@ -55,7 +55,8 @@ def file_to_distance_matrix(input_path, output_path, parser, threas):
     struct = parser.get_structure(input_path, input_path)
     atoms = struct.get_atoms()
     coords = np.array([atom.coord for atom in atoms]).astype(np.float32)
-    dists = distance.cdist(coords, coords)
+    dists = 1 / distance.cdist(coords, coords)
+    dists[dists == np.inf] = 0
     # dists[dists < threas] = -1
     np.save(output_path, dists)
 
@@ -76,10 +77,10 @@ def generate_fasta_files(df, path):
 
 
 def main():
-    # generate_distance_matrices_from_folder("/cs/labs/dina/meitar/rhodopsins/pdbs/",
-                                           #"/cs/labs/dina/meitar/rhodopsins/graphs/")
-    df = pd.read_excel(EXCEL_PATH)
-    generate_fasta_files(df, FASTAS_PATH)
+    generate_distance_matrices_from_folder("/cs/labs/dina/meitar/rhodopsins/pdbs/",
+                                           "/cs/labs/dina/meitar/rhodopsins/graphs/")
+    # df = pd.read_excel(EXCEL_PATH)
+    # generate_fasta_files(df, FASTAS_PATH)
 
 if __name__ == "__main__":
     main()
