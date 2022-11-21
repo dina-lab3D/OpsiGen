@@ -14,3 +14,4 @@
 /protein_bank_pdbs/
 /new_encodings/results/
 pyvenv.cfg
+*.pckl
