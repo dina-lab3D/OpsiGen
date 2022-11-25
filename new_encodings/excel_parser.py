@@ -21,7 +21,9 @@ def entry_to_encoding(entry, index, path):
     vectors = []
     for i in range(5, 29):
         vectors.append(letter_to_onehot(entry.iloc[i]))
-    return np.concatenate(vectors, axis=0)
+
+    print(np.concatenate(vectors, axis=0).shape)
+    return np.reshape(np.concatenate(vectors), (24, 26))
 
 
 def generate_features_files(df, path):
