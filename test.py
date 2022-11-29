@@ -6,6 +6,7 @@ import pickle
 from torch.utils.data import DataLoader
 from itertools import product
 import pickle
+import numpy as np
 
 import models
 from pdb_parser import ELEMENTS
@@ -25,34 +26,28 @@ def main():
             model = pickle.load(f).to(device)
     else:
         model = models.GATModel(18, 200, 200, device).to(device)
-    optimizer = optim.AdamW(model.parameters(), lr=0.0001)
     dataset = PDBDataset(PDBDatasetConfig())
     dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
     print("starting loop")
     loss_sum = 0
     index = 0
+    result_losses = []
     while True:
         for i, graph in enumerate(dataloader):
-            index += 1
-            if i % 18 == 0:
+            if i % 18 != 0:
                 continue
+            index += 1
             if graph[2] == 0:
                 print("skipping")
                 continue
-            if index % 100 == 0:
-                loss_sum = 0
-                index = 1
-                with open('model.pckl', 'wb') as f:
-                    pickle.dump(model, f)
-                print("saving")
 
-            optimizer.zero_grad()
             result = model.double().forward(graph[0], graph[1], 10)
             loss = torch.norm(result - graph[2].to(device))
             loss_sum += loss.item()
-            print(result.item(), graph[2].item(),loss_sum / index, result.shape)
-            loss.backward()
-            optimizer.step()
+            result_losses.append(loss.item())
+            print("losses: " + str(result_losses))
+            print("current mean: " + str(np.mean(result_losses)))
+            print("current std: " + str(np.std(result_losses)))
 
             if loss.item() > 1000:
                 print("error on", graph[2].item())

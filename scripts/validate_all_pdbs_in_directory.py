@@ -1,7 +1,7 @@
 from Bio import PDB
 import os
 
-INPUT_DIR = "/cs/labs/dina/meitar/rhodopsins/pdbs/"
+INPUT_DIR = "/cs/labs/dina/meitar/rhodopsins/retina_pdbs/"
 
 def main():
     my_parser = PDB.PDBParser()

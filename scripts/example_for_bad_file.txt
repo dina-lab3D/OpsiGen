@@ -1,0 +1,1 @@
+./my_align.pl ../chains/750-SRII.Rh224-251.pdb ../pdbs/SRII-Rh224-251_NpSRII_750_unrelaxed_rank_1_model_5.pdb ../matches/match_750\[1]

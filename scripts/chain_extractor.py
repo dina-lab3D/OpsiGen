@@ -15,6 +15,7 @@ def main():
         for file_name in file_names:
             if file_name.endswith('].pdb'):
                 chain, new_file_path = get_chain_from_file(file_name)
+                print(dirpath)
                 cmd = '/cs/staff/dina/utils/getChain.Linux {} {} > {}'.format(chain, dirpath + file_name, new_file_path)
                 os.system(cmd)
 

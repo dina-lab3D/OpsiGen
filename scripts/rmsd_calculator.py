@@ -33,12 +33,14 @@ def generate_pdb_name(entry, id, path):
 def generate_pdb_files(df, path):
     print("starting to calculate rmsd")
     for i in range(len(df)):
+        if i != 485 and i < 710:
+            continue
         experimental_pdb = EXPERIMENTAL_PDBS_PATH + generate_pdb_name(df.iloc[i], i, EXPERIMENTAL_PDBS_PATH)
         af_pdbs = entry_to_features_file_names(df.iloc[i], i, OUR_PDBS_PATH)
 
         for j, af_pdb in enumerate(af_pdbs):
             if os.path.isfile(af_pdb):
-                os.system('/cs/labs/dina/meitar/rhodopsins/scripts/my_align.pl {} {} {}/match_{}[{}].stats'.format(experimental_pdb, af_pdb, OUTPUT_FOLDER, i, j))
+                os.system('/cs/labs/dina/meitar/rhodopsins/scripts/my_align.pl {} {} {}/match_{}[{}].stats'.format(experimental_pdb, af_pdb, OUTPUT_FOLDER, i, int(j / 5) + 1))
 
     print("Done")
 

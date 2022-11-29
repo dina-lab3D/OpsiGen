@@ -15,5 +15,9 @@
 /new_encodings/results/
 /matches/
 /chains/
+/retinas/
+/aligned_pdbs/
+/retina_pdbs/
 pyvenv.cfg
+model.pckl
 *.pckl
