@@ -13,17 +13,18 @@ OUTPUT_FOLDER = "/cs/labs/dina/meitar/rhodopsins/matches/"
 
 
 def entry_to_features_file_names(entry, id, path):
-    features_file_names_format = entry['Name'].replace('/', '-').replace(' ', '') + '_' + entry['Wildtype'] + '_' + str(
+    features_file_names_format = entry['Name'].replace('/', '-').replace(' ', '') + '_' + entry['Wildtype'].replace(' ','') + '_' + str(
         id) + '_' + 'unrelaxed_rank_{}_model_{}.pdb'
     result = []
     for i in range(1,6):
         for j in range(1,6):
-            result.append(path + features_file_names_format.format(i, j))
+            result.append(path + features_file_names_format.format(i, j).replace('\xa0',''))
     return result
 
 
 def generate_fasta_name(entry, id, path):
-    return str(id) + '-' + entry['Name'].replace('/','.').replace(' ', '_') + '.fasta'
+    res = (str(id) + '-' + entry['Name'].replace('/','.').replace(' ', '_') + '.fasta').replace('\xa0','')
+    return res
 
 
 def generate_pdb_name(entry, id, path):
@@ -33,13 +34,15 @@ def generate_pdb_name(entry, id, path):
 def generate_pdb_files(df, path):
     print("starting to calculate rmsd")
     for i in range(len(df)):
-        if i != 485 and i < 710:
-            continue
         experimental_pdb = EXPERIMENTAL_PDBS_PATH + generate_pdb_name(df.iloc[i], i, EXPERIMENTAL_PDBS_PATH)
         af_pdbs = entry_to_features_file_names(df.iloc[i], i, OUR_PDBS_PATH)
 
+        print(experimental_pdb)
+
         for j, af_pdb in enumerate(af_pdbs):
             if os.path.isfile(af_pdb):
+                print('/cs/labs/dina/meitar/rhodopsins/scripts/my_align.pl {} {} {}/match_{}[{}].stats'.format(experimental_pdb, af_pdb, OUTPUT_FOLDER, i, int(j / 5) + 1))
+
                 os.system('/cs/labs/dina/meitar/rhodopsins/scripts/my_align.pl {} {} {}/match_{}[{}].stats'.format(experimental_pdb, af_pdb, OUTPUT_FOLDER, i, int(j / 5) + 1))
 
     print("Done")

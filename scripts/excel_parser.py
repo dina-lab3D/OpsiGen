@@ -52,15 +52,19 @@ def entry_to_pdb_name(entry, id, path):
 
 
 def file_to_distance_matrix(input_path, output_path, parser, threas):
-    struct = parser.get_structure(input_path, input_path)
-    atoms = struct.get_atoms()
-    my_atoms = [atom for atom in atoms]
-    breakpoint()
-    coords = np.array([atom.coord for atom in my_atoms]).astype(np.float32)
-    dists = 1 / distance.cdist(coords, coords)
-    dists[dists == np.inf] = 0
-    # dists[dists < threas] = -1
-    np.save(output_path, dists)
+    try:
+        struct = parser.get_structure(input_path, input_path)
+        atoms = struct.get_atoms()
+        my_atoms = [atom for atom in atoms]
+        coords = np.array([atom.coord for atom in my_atoms]).astype(np.float32)
+        if len(coords) == 0:
+            print(input_path)
+        dists = 1 / distance.cdist(coords, coords)
+        dists[dists == np.inf] = 0
+        # dists[dists < threas] = -1
+        np.save(output_path, dists)
+    except Exception as e:
+        breakpoint()
 
 
 def generate_distance_matrices_from_folder(input_path, output_path):
@@ -79,7 +83,7 @@ def generate_fasta_files(df, path):
 
 
 def main():
-    generate_distance_matrices_from_folder("/cs/labs/dina/meitar/rhodopsins/retina_pdbs/", "/tmp/")
+    generate_distance_matrices_from_folder("/cs/labs/dina/meitar/rhodopsins/cutted_parts/", "/cs/labs/dina/meitar/rhodopsins/graphs/")
     # generate_distance_matrices_from_folder("/cs/labs/dina/meitar/rhodopsins/retina_pdbs/", "/cs/labs/dina/meitar/rhodopsins/graphs/")
     # df = pd.read_excel(EXCEL_PATH)
     # generate_fasta_files(df, FASTAS_PATH)

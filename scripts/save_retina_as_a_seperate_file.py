@@ -34,8 +34,13 @@ def add_retina_to_aligned_pdb(aligned_pdb, match_pdb, result_pdb):
                 continue
                 # f.write(line)
         f.write("MODEL 2\n")
+        index = 0
         for line in ret_lines:
-            f.write(line)
+            if index < 20:
+                f.write(line)
+            else:
+                continue
+            index += 1
         f.write("ENDMDL\n")
         f.write("END")
 

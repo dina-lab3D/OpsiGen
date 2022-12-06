@@ -5,27 +5,60 @@ INPUT_DIR = "/cs/labs/dina/meitar/rhodopsins/pdb_validator/"
 
 
 index_dict = {
-        742:2,
-        746:2,
-        735:2,
-        724:2,
-        734:2,
-        725:2,
-        735:2,
-        752:2,
-        736:2,
-        749:2,
-        744:2,
-        719:2,
-        751:2,
-        751:2,
-        485: 2,
-        750: 2,
-        747: 2,
-        743: 2,
-        752: 2,
-        723: 2,
-        748: 2,
+        #742:2,
+        #746:2,
+        #735:2,
+        #724:2,
+        #734:2,
+        #725:2,
+        #735:2,
+        #752:2,
+        #736:2,
+        #749:2,
+        #744:2,
+        #719:2,
+        #751:2,
+        #751:2,
+        #485: 2,
+        #750: 2,
+        #747: 2,
+        #743: 2,
+        #752: 2,
+        #723: 2,
+        #748: 2,
+        794: 3,
+        170: 3,
+        174: 3,
+        171: 3,
+        172: 3,
+        173: 3,
+        175: 3,
+        176: 3,
+        177: 3,
+        178: 3,
+        179: 3,
+        180: 3,
+        181: 3,
+        182: 3,
+        183: 3,
+        617: 3,
+        80: 6,
+        81: 6,
+        82: 6,
+        83: 6,
+        84: 6,
+        85: 6,
+        182: 3,
+        101: 5,
+        102: 5,
+        602: 6,
+        551: 9,
+        550: 9,
+        566: 9,
+        604: 9,
+        772: 3,
+        65: 6,
+        128: 5,
 }
 
 def get_index_from_name(full_file_name):
@@ -57,12 +90,19 @@ def extract_pdb_from_found_blast_seq(input_file, output_dir):
     entry_index = get_index_from_name(input_file)
     special_place = entry_index in index_dict.keys()
 
-    index_from_seq_file = 1 if special_place else 0
+    index_from_seq_file = (index_dict[entry_index] - 1) if special_place else 0
     file_name = input_file.split('/')[-1]
 
-    if index_from_seq_file != 1:
+    if entry_index != 128:
+        return
+
+    """
+    if index_from_seq_file == 0:
         print("Not relevant")
         return
+    """
+
+    print(entry_index)
 
     # pdb_id = protein_ids[0][:4]
     # print(protein_ids[index_from_seq_file][:4])
