@@ -20,4 +20,10 @@
 /retina_pdbs/
 pyvenv.cfg
 model.pckl
+log
+/cutted_parts/
+/splits/
+/pickles/
+/wandb/
+slurm*
 *.pckl

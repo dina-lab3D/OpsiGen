@@ -6,52 +6,52 @@ import pickle
 from torch.utils.data import DataLoader
 from itertools import product
 import pickle
-import numpy as np
+import matplotlib.pyplot as plt
 
 import models
 from pdb_parser import ELEMENTS
 from pdb_dataset import PDBDataset, PDBDatasetConfig
-
+import argparse
+import wandb
 
 FILE_PATH = '/mnt/c/Users/zlils/Documents/university/biology/rhodopsins/excel/data.xlsx'
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('pickle_file')
+    parser.add_argument('wildtypes_list')
+    args = parser.parse_args()
+
+    return args
 
 
 def main():
     print("Hello!")
-    print(torch.cuda.is_available())
+    args = parse_arguments()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     to_load = True
-    if to_load:
-        with open('model.pckl', 'rb') as f:
-            model = pickle.load(f).to(device)
-    else:
-        model = models.GATModel(18, 200, 200, device).to(device)
-    dataset = PDBDataset(PDBDatasetConfig())
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
+    with open(args.pickle_file, 'rb') as f:
+        model = pickle.load(f).to(device)
+    model.eval()
+    dataset = PDBDataset(PDBDatasetConfig(), args.wildtypes_list)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
     print("starting loop")
+    losses_graph = []
     loss_sum = 0
+    loss_train = []
     index = 0
-    result_losses = []
-    while True:
-        for i, graph in enumerate(dataloader):
-            if i % 18 != 0:
-                continue
-            index += 1
-            if graph[2] == 0:
-                print("skipping")
-                continue
-
-            result = model.double().forward(graph[0], graph[1], 10)
-            loss = torch.norm(result - graph[2].to(device))
-            loss_sum += loss.item()
-            result_losses.append(loss.item())
-            print("losses: " + str(result_losses))
-            print("current mean: " + str(np.mean(result_losses)))
-            print("current std: " + str(np.std(result_losses)))
-
-            if loss.item() > 1000:
-                print("error on", graph[2].item())
-
+    EV = 1239.8
+    for i, graph in enumerate(dataloader):
+        if graph[2] == 0:
+            continue
+        index += 1
+        result = model.double().forward(graph[0], graph[1], 5)
+        if result.item() < EV and result.item() > 1:
+            loss = torch.norm((EV / result) - (EV / graph[2]).to(device)) * 100
+        else:
+            loss = torch.norm(result - graph[2].to(device)) * 100
+        loss_train.append(loss.item())
+        print((result.item()), graph[2].item(),loss.item())
 
 if __name__ == "__main__":
     main()

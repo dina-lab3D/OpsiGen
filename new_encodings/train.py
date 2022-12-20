@@ -28,13 +28,14 @@ def main():
         model = models.SimpleModel()
     optimizer = optim.AdamW(model.parameters(), lr=0.001)
     full_dataset = MeitarDataset(MeitarDatasetConfig())
-    train_dataset, test_dataset = random_split(full_dataset, [int(0.95 * len(full_dataset)),len(full_dataset) - int(0.95 * len(full_dataset))])
+    ratio = 0.85
+    train_dataset, test_dataset = random_split(full_dataset, [int(ratio * len(full_dataset)),len(full_dataset) - int(ratio * len(full_dataset))])
     train_dataloader = DataLoader(train_dataset, batch_size=5, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True)
     print("starting loop")
     loss_sum = 0
     index = 0
-    for _ in range(4):
+    for _ in range(15):
         for arrs, lmaxs in train_dataloader:
             index += 1
             if index % 100 == 0:
@@ -60,8 +61,8 @@ def main():
         print(result.item())
 
     print(losses)
-    print(np.mean(losses))
-    print(np.std(losses))
+    print("mean", np.mean(losses))
+    print("std", np.std(losses))
 
 if __name__ == "__main__":
     main()

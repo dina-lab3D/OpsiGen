@@ -56,18 +56,25 @@ class GATModel(nn.Module):
             kwargs - Additional arguments for the graph layer (e.g. number of heads for GAT)
         """
         super().__init__()
-        GAT = geom_nn.GATConv
+        self.num_convs = 5
+        GAT = geom_nn.GATv2Conv
         self.device = device
         self.conv1 = GAT(c_in, c_hidden, edge_dim=edge_dim)
-        self.bn1 = BatchNorm(c_hidden)
         self.conv2 = GAT(c_hidden, c_hidden, edge_dim=edge_dim)
-        self.bn2 = BatchNorm(c_hidden*heads2)
         self.conv3 = GAT(c_hidden, c_out, edge_dim=edge_dim, concat=False)
-        self.bn3 = BatchNorm(c_hidden)
         self.l1 = nn.Sequential(
             nn.Dropout(dp_rate),
-            nn.Linear(c_out, 1)
+            nn.Linear(c_out, c_out * 3)
         )
+        self.l2 = nn.Sequential(
+            nn.Dropout(dp_rate),
+            nn.Linear(c_out * 3, c_out * 2)
+        )
+        self.l3 = nn.Sequential(
+            nn.Dropout(dp_rate),
+            nn.Linear(c_out * 2, c_out * 1)
+        )
+        self.l4 = nn.Linear(c_out, 1)
 
     def forward(self, features, edge_weights, threashold=0):
         """
@@ -76,26 +83,33 @@ class GATModel(nn.Module):
             edge_index - List of vertex index pairs representing the edges in the graph (PyTorch geometric notation)
         """
         NUM_FEATURES = 18
+        # edge_weights[:, -20:,-20:] = 0
         flatten_weights_array = edge_weights.squeeze()[edge_weights.squeeze() > 1 / threashold]
         edge_index_array = np.argwhere(edge_weights.squeeze() > 1 / threashold)
-        features_array = features.squeeze()
+        features_array = features.squeeze().reshape(int(features.squeeze().shape[0] / NUM_FEATURES), NUM_FEATURES).double()
 
         flatten_weights = torch.tensor(flatten_weights_array, device=self.device).double()
         edge_index = torch.tensor(edge_index_array, device=self.device)
         features = torch.tensor(features_array, device=self.device).double()
 
         x1 = self.conv1(features, edge_index, flatten_weights)
-        nn.ELU(x1, inplace=True)
-        x2 = self.conv2(x1, edge_index, flatten_weights)  # skip connection
-        nn.ELU(x2, inplace=True)
+        nn.ReLU(inplace=True)(x1)
+        x2 = self.conv2(x1, edge_index, flatten_weights)
+        nn.ReLU(inplace=True)(x2)
         x3 = self.conv3(x2, edge_index, flatten_weights)
-        nn.ELU(x3, inplace=True)
-        x4 = torch.norm(x3, dim=-2, p=4)
+        nn.ReLU(inplace=True)(x3)
+        x4, _ = torch.max(x3, dim=-2)
         x5 = self.l1(x4)
+        nn.ReLU(inplace=True)(x5)
+        x6 = self.l2(x5)
+        nn.ReLU(inplace=True)(x6)
+        x7 = self.l3(x6)
+        nn.ReLU(inplace=True)(x7)
+        x8 = self.l4(x7)
         # x5 = torch.mean(input=x2, axis=-2)
         # x5 = torch.max(self.head(x3))
 
-        return x5
+        return x8
 
 
 class ConvModel(nn.Module):
@@ -146,7 +160,6 @@ class ConvModel(nn.Module):
         x = F.dropout(x, p=0.3, training=self.training)
         x = self.lin2(x)
 
-        breakpoint()
 
         return x
 
@@ -199,7 +212,7 @@ class GATConvModel(nn.Module):
             x = F.leaky_relu(bn((conv(x, edge_index, edge_weights))) + x) # added skip connection
         x = self.set2set(x, batch_idx)
         x = F.leaky_relu(self.lin1(x))
-        x = F.dropout(x, p=0.5, training=self.training)
+        x = F.dropout(x, p=0.1, training=self.training)
         x = self.lin2(x)
 
         return x

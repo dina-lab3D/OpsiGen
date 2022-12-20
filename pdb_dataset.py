@@ -2,10 +2,12 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import pandas as pd
 import excel_parser
+import os
 from dataclasses import dataclass
 
 
 FILE_PATH = './excel/data.xlsx'
+WILDTYPES_LIST = '/cs/labs/dina/meitar/rhodopsins/splits/train0'
 
 
 # a simple custom collate function, just to show the idea
@@ -18,16 +20,11 @@ class PDBDatasetConfig:
 
 
 class PDBDataset(Dataset):
-    def __init__(self, config):
-        # self.files = []
+    def __init__(self, config, wildtypes_file):
         self.config = config
         self.excel_data = pd.read_excel(config.excel_path)
-        # for filename in os.listdir(directory):
-        #     f = os.path.join(directory, filename)
-        #     # checking if it is a file
-        #     if os.path.isfile(f):
-        #         self.files.append(f)
-        # self.parser = PDB.PDBParser()
+        with open(wildtypes_file, "r") as f:
+            self.wildtypes_names = [line[:-1] for line in f.readlines()]
 
     def get_category(self, category):
         return list(self.excel_data[category])
@@ -37,31 +34,22 @@ class PDBDataset(Dataset):
 
     @staticmethod
     def read_graph(dists_file_name, features_file_name):
+        print(dists_file_name)
         dists = None
         features = None
-        try:
+        if os.path.exists(dists_file_name):
             dists = np.load(dists_file_name)
-        except FileNotFoundError:
-            pass
 
-        try:
+        if os.path.exists(features_file_name):
             features = np.load(features_file_name)
-        except FileNotFoundError:
-            pass
+
         return features, dists
 
     def __getitem__(self, idx):
-        # name = self.get_category('Name')[idx]
         entry = self.excel_data.iloc[idx]
-        dists_file_names = excel_parser.entry_to_dists_file_names(entry, idx, self.config.graph_dists_path)
-        features_file_names = excel_parser.entry_to_features_file_names(entry, idx, self.config.graph_features_path)
-        dists = None
-        features = None
-        for i in range(len(dists_file_names)):
-            features, dists = PDBDataset.read_graph(dists_file_names[i], features_file_names[i])
-            if (not (dists is None)) and (not (features is None)):
-                break
+        features, dists = PDBDataset.read_graph(self.config.graph_dists_path + "cutted_parts{}_dists.npy".format(idx), self.config.graph_features_path + "cutted_parts{}.npz".format(idx))
 
+        wildtype = self.get_category('Wildtype')[idx]
         lmax = self.get_category('lmax')[idx]
         if dists is None or features is None:
             if dists is None:
@@ -69,11 +57,13 @@ class PDBDataset(Dataset):
             else:
                 print("features is None")
             return [], [], 0
+        if wildtype not in self.wildtypes_names:
+            return [], [], 0
         return features, dists, lmax
 
 
 def main():
-    dataset = PDBDataset(PDBDatasetConfig())
+    dataset = PDBDataset(PDBDatasetConfig(), WILDTYPES_LIST)
     dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
     for batch in dataloader:
         print(batch)

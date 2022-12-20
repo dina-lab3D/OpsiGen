@@ -11,7 +11,7 @@ FASTAS_PATH = "/cs/labs/dina/meitar/rhodopsins/fastas/"
 
 
 def generate_fasta_name(entry, id, path):
-    return str(id) + '-' + entry['Name'].replace('/','.').replace(' ', '_') + '.fasta'
+    return str(id) + '-' + entry['Name'].replace('/','.').replace(' ', '_').replace('(','O').replace(')','O') + '.fasta'
 
 
 def entry_to_dists_file_names(entry, id, path):
@@ -43,6 +43,7 @@ def entry_to_fasta(entry, id, path):
     fasta_content = first_line + '\n' + sequence
 
     fasta_path = os.path.join(path, generate_fasta_name(entry, id, path))
+
     with open(fasta_path, 'w') as f:
         f.write(fasta_content)
 

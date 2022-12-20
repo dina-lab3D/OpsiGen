@@ -3,7 +3,7 @@ import os
 PDBS_DIR = "/cs/labs/dina/meitar/rhodopsins/aligned_pdbs"
 RETINAS_DIR = "/cs/labs/dina/meitar/rhodopsins/retinas"
 RESULT_DIR = "/cs/labs/dina/meitar/rhodopsins/cutted_parts"
-THREASHOLD = 15.0
+THREASHOLD = 6.0
 
 
 CMD = "timeout 10s ~dina/utils/srcs/interface/interface {}/match_{}\[1].pdb {}/match_{}\[1].pdb {} -p {}/cutted_parts{}.pdb"
