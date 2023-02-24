@@ -11,9 +11,30 @@ OUR_PDBS_PATH = "/cs/labs/dina/meitar/rhodopsins/pdbs/"
 EXPERIMENTAL_PDBS_PATH = "/cs/labs/dina/meitar/rhodopsins/chains/"
 OUTPUT_FOLDER = "/cs/labs/dina/meitar/rhodopsins/matches/"
 
+replacements = {
+    '/': '-',
+    ' ': '',
+    '(': 'O',
+    ')': 'O',
+    '+': '_',
+    ',': '_',
+    '\xa0': '_',
+}
+
 
 def entry_to_features_file_names(entry, id, path):
-    features_file_names_format = entry['Name'].replace('/', '-').replace(' ', '') + '_' + entry['Wildtype'].replace(' ','') + '_' + str(
+    if id == 175:
+        print(entry['Name'])
+
+    replaced_entry = entry['Name']
+    if ')' in entry['Name'] and (not '(' in entry['Name']):
+        replacements[')'] = '_'
+
+    for key in replacements:
+        # print(key, replacements[key])
+        replaced_entry = replaced_entry.replace(key, replacements[key])
+
+    features_file_names_format = replaced_entry + '_' + entry['Wildtype'].replace(' ','') + '_' + str(
         id) + '_' + 'unrelaxed_rank_{}_model_{}.pdb'
     result = []
     for i in range(1,6):
@@ -28,7 +49,16 @@ def generate_fasta_name(entry, id, path):
 
 
 def generate_pdb_name(entry, id, path):
-    return generate_fasta_name(entry, id, path).replace('.fasta', '.pdb')
+    files = []
+    for root, folds, file_names in os.walk(path):
+        files = file_names
+
+    for file_name in files:
+        if file_name.startswith(str(id) + "-"):
+            return file_name.replace('(', '\(').replace(')', '\)')
+
+
+    # return generate_fasta_name(entry, id, path).replace('.fasta', '.pdb').replace('(', '\(').replace(')', '\)')
 
 
 def generate_pdb_files(df, path):
@@ -36,9 +66,12 @@ def generate_pdb_files(df, path):
     for i in range(len(df)):
         experimental_pdb = EXPERIMENTAL_PDBS_PATH + generate_pdb_name(df.iloc[i], i, EXPERIMENTAL_PDBS_PATH)
         af_pdbs = entry_to_features_file_names(df.iloc[i], i, OUR_PDBS_PATH)
+        if i != 224:
+            continue
 
         print(experimental_pdb)
-
+        print(af_pdbs)
+        
         for j, af_pdb in enumerate(af_pdbs):
             if os.path.isfile(af_pdb):
                 print('/cs/labs/dina/meitar/rhodopsins/scripts/my_align.pl {} {} {}/match_{}[{}].stats'.format(experimental_pdb, af_pdb, OUTPUT_FOLDER, i, int(j / 5) + 1))

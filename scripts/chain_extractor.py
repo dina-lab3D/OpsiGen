@@ -8,8 +8,13 @@ SPECIAL_CASES_DICT = {
 }
 
 def get_chain_from_file(file_name):
+
+
+    file_name = file_name.replace("(", "\(")
+    file_name = file_name.replace(")", "\)")
     start = file_name.index('[')
     end = file_name.index(']')
+    print(file_name)
 
     for key in SPECIAL_CASES_DICT.keys():
         if str(key) in file_name:
@@ -21,11 +26,13 @@ def get_chain_from_file(file_name):
 def main():
     for dirpath, _, file_names in os.walk(INPUT_DIRECTORY):
         for file_name in file_names:
-            if '128' not in file_name:
+            if not file_name.startswith('224'):
                 continue
             if file_name.endswith('].pdb'):
                 chain, new_file_path = get_chain_from_file(file_name)
-                print(file_name)
+                file_name = file_name.replace("(", "\(")
+                file_name = file_name.replace(")", "\)")
+                print(new_file_path)
                 cmd = '/cs/staff/dina/utils/getChain.Linux {} {} > {}'.format(chain, dirpath + file_name, new_file_path)
                 print(cmd)
                 os.system(cmd)

@@ -6,43 +6,32 @@ from scipy.spatial import distance
 
 
 EXCEL_PATH = "/cs/labs/dina/meitar/rhodopsins/excel/data.xlsx"
+SEQUENCES_PATH = "/cs/labs/dina/meitar/rhodopsins/excel/sequences.fas"
 
-FASTAS_PATH = "/cs/labs/dina/meitar/rhodopsins/fastas/"
-
-
-def generate_fasta_name(entry, id, path):
-    return str(id) + '-' + entry['Name'].replace('/','.').replace(' ', '_') + '.fasta'
+FASTAS_TARGET_PATH = "/cs/labs/dina/meitar/rhodopsins/new_fastas/"
 
 
-def entry_to_dists_file_names(entry, id, path):
-    dist_file_name_format = entry['Name'].replace('/', '-').replace(' ', '') + '_' + entry['Wildtype'] + '_' + str(id) + '_' + 'unrelaxed_rank_{}_model_{}_dists.npy'
-    result = []
-    for i in range(1,6):
-        for j in range(1,6):
-            result.append(path + dist_file_name_format.format(i, j))
+def generate_fasta_name(idx):
+    return "seq_" + str(idx) + ".fasta"
+
+
+def entry_to_dists_file_names(entry, idx, path):
+    return 
+    pass
+
+
+def entry_to_features_file_names(entry, idx, path):
     return result
 
 
-def entry_to_features_file_names(entry, id, path):
-    features_file_names_format = entry['Name'].replace('/', '-').replace(' ', '') + '_' + entry['Wildtype'] + '_' + str(
-        id) + '_' + 'unrelaxed_rank_{}_model_{}.npy'
-    result = []
-    for i in range(1,6):
-        for j in range(1,6):
-            result.append(path + features_file_names_format.format(i, j))
-    return result
-
-
-def entry_to_fasta(entry, id, path):
-    FIELDS = ['Name', 'Wildtype']
-    unique_id = '|'.join([entry[field] for field in FIELDS] + [str(id)]).replace(' ','').replace('/','-')
-
-    first_line = '>' + unique_id
-    sequence = entry['Sequence']
+def entry_to_fasta(lines, idx, target_path):
+    first_line = '>' + str(idx)
+    sequence = lines[idx * 2 + 1].strip().replace('-','')
 
     fasta_content = first_line + '\n' + sequence
+    fasta_name = generate_fasta_name(idx)
 
-    fasta_path = os.path.join(path, generate_fasta_name(entry, id, path))
+    fasta_path = os.path.join(target_path, fasta_name)
     with open(fasta_path, 'w') as f:
         f.write(fasta_content)
 
@@ -78,18 +67,22 @@ def generate_distance_matrices_from_folder(input_path, output_path):
             # print(pdb_path, npz_path)
 
 
-def generate_fasta_files(df, path):
-    for i in range(len(df)):
-        if i != 767:
-            continue
-        entry_to_fasta(df.iloc[i], i, path)
+def generate_fasta_files(sequences_path, target_path):
+    with open(sequences_path, "r") as f:
+        lines = f.readlines()
+    
+    num_rhodopsins = int(len(lines) / 2)
+    for i in range(num_rhodopsins):
+        entry_to_fasta(lines, i, target_path)
+    # for i in range(len(df)):
+    # entry_to_fasta(df.iloc[i], i, path)
 
 
 def main():
-    generate_distance_matrices_from_folder("/cs/labs/dina/meitar/rhodopsins/their_cutted_parts2/", "/cs/labs/dina/meitar/rhodopsins/their_graph2/")
+    # generate_distance_matrices_from_folder("/cs/labs/dina/meitar/rhodopsins/cutted_lysin/", "/cs/labs/dina/meitar/rhodopsins/lysin_graph/")
     # generate_distance_matrices_from_folder("/cs/labs/dina/meitar/rhodopsins/retina_pdbs/", "/cs/labs/dina/meitar/rhodopsins/graphs/")
     #df = pd.read_excel(EXCEL_PATH)
-    #generate_fasta_files(df, FASTAS_PATH)
+    generate_fasta_files(SEQUENCES_PATH, FASTAS_TARGET_PATH)
 
 if __name__ == "__main__":
     main()

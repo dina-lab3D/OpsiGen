@@ -5,27 +5,27 @@ INPUT_DIR = "/cs/labs/dina/meitar/rhodopsins/pdb_validator/"
 
 
 index_dict = {
-        #742:2,
-        #746:2,
-        #735:2,
-        #724:2,
-        #734:2,
-        #725:2,
-        #735:2,
-        #752:2,
-        #736:2,
-        #749:2,
-        #744:2,
-        #719:2,
-        #751:2,
-        #751:2,
-        #485: 2,
-        #750: 2,
-        #747: 2,
-        #743: 2,
-        #752: 2,
-        #723: 2,
-        #748: 2,
+        742:2,
+        746:2,
+        735:2,
+        724:2,
+        734:2,
+        725:2,
+        735:2,
+        752:2,
+        736:2,
+        749:2,
+        744:2,
+        719:2,
+        751:2,
+        751:2,
+        485: 2,
+        750: 2,
+        747: 2,
+        743: 2,
+        752: 2,
+        723: 2,
+        748: 2,
         794: 3,
         170: 3,
         174: 3,
@@ -59,6 +59,8 @@ index_dict = {
         772: 3,
         65: 6,
         128: 5,
+        223: 1,
+        224: 1,
 }
 
 def get_index_from_name(full_file_name):
@@ -93,22 +95,25 @@ def extract_pdb_from_found_blast_seq(input_file, output_dir):
     index_from_seq_file = (index_dict[entry_index] - 1) if special_place else 0
     file_name = input_file.split('/')[-1]
 
-    if entry_index != 128:
-        return
+    #if index_from_seq_file == 0:
+    #    print("Not relevant")
+    #    return
 
-    """
-    if index_from_seq_file == 0:
-        print("Not relevant")
+    if entry_index != 224:
         return
-    """
 
     print(entry_index)
 
-    # pdb_id = protein_ids[0][:4]
-    # print(protein_ids[index_from_seq_file][:4])
-    # print(input_file.replace('.seq', '[{}].pdb'.format(protein_ids[0][5])))
+    pdb_id = protein_ids[0][:4]
+    print(protein_ids[index_from_seq_file][:4])
+    print(input_file.replace('.seq', '[{}].pdb'.format(protein_ids[0][5])))
+    new_file_name = file_name.replace('.seq', '[{}].pdb'.format(protein_ids[index_from_seq_file][5]))
+    new_file_name = new_file_name.replace("(", "\(")
+    new_file_name = new_file_name.replace(")", "\)")
 
-    os.system('wget https://files.rcsb.org/download/{}.pdb -O {}/{}'.format(protein_ids[index_from_seq_file][:4], output_dir, file_name.replace('.seq', '[{}].pdb'.format(protein_ids[index_from_seq_file][5]))))
+    print(new_file_name)
+
+    os.system('wget https://files.rcsb.org/download/{}.pdb -O {}/{}'.format(protein_ids[index_from_seq_file][:4], output_dir, new_file_name))
 
 
 def main():
@@ -117,6 +122,9 @@ def main():
             if file_name.endswith('.seq'):
                 # print(file_name)
                 extract_pdb_from_found_blast_seq(INPUT_DIR + file_name, OUTPUT_DIR)
+
+    os.system(f"sed -i \'/BRET/d\' " + OUTPUT_DIR + "/*")
+    os.system(f"sed -i \'s/ARET/ RET/g' " + OUTPUT_DIR + "/*")
 
     # print(lines[i+2: i+12])
 

@@ -14,10 +14,6 @@ def parse_line(line):
 def matching_file_to_alignment(matching_file):
     file_name = matching_file.split('/')[-1]
     file_name = file_name.replace('.stats', '.pdb')
-    if '_' + "224" + "[" in matching_file:
-        print(matching_file)
-    else:
-        return
     os.system("/cs/labs/dina/meitar/rhodopsins/scripts/align_from_stats.pl {} {}".format(matching_file, RESULT_DIR + file_name))
     with open(matching_file, "r+") as f:
         for line in f.readlines():
