@@ -127,6 +127,7 @@ def cut_pdb(parser, pdb_path, sequences, io):
     index_mapping = get_wavelength_indexes_from_file(WL_FILE)
     # print(rhodopsin_index, index_mapping[rhodopsin_index])
     amino_indexes = sequences.get_interesting_positions(index_mapping[rhodopsin_index])
+    print(amino_indexes)
     line = sequences._get_relevant_line(rhodopsin_index).replace('-','')
     struct = parser.get_structure(pdb_path, pdb_path)
     model = struct.child_list[0]
@@ -143,7 +144,7 @@ def cut_pdb(parser, pdb_path, sequences, io):
         print("Line length", len(line))
         print("Filename", filename)
         print(rhodopsin_index, index_mapping[rhodopsin_index])
-        breakpoint()
+        # breakpoint()
 
         return True
 
@@ -151,8 +152,8 @@ def cut_pdb(parser, pdb_path, sequences, io):
     model.child_list[0] = chain
     struct.child_list[0] = model
 
-    io.set_structure(struct)
-    io.save(os.path.join(CUTTED_PARTS_PATH, "cutted_parts{}.pdb".format(rhodopsin_index)))
+    # io.set_structure(struct)
+    # io.save(os.path.join(CUTTED_PARTS_PATH, "cutted_parts{}.pdb".format(rhodopsin_index)))
 
     return False
 
