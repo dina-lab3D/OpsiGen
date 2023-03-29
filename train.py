@@ -59,6 +59,7 @@ def generate_dataset_config(config):
     dataset_config.excel_path = config["excel_path"]
     dataset_config.graph_dists_path = config["graph_dists_path"]
     dataset_config.graph_features_path = config["graph_features_path"]
+    dataset_config.indexes = config["indexes_to_keep"]
 
     return dataset_config
 

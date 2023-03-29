@@ -61,6 +61,7 @@ def generate_dataset_config(config):
     dataset_config.excel_path = config["excel_path"]
     dataset_config.graph_dists_path = config["graph_dists_path"]
     dataset_config.graph_features_path = config["graph_features_path"]
+    dataset_config.indexes = config["indexes_to_keep"]
 
     return dataset_config
 
@@ -80,17 +81,39 @@ def main():
         model = pickle.load(f).to(device)
     train_dataset = PDBDataset(generate_dataset_config(config), config["train_wildtypes_list"], normalize_last=config["dataset_normalize_last"])
     test_dataset = PDBDataset(generate_dataset_config(config), config["test_wildtypes_list"], means=train_dataset.means, stds=train_dataset.stds, normalize_last=config["dataset_normalize_last"])
-    test_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False)
+
+    spectra = []
+    train_spectra = []
+
+    for i, graph in enumerate(train_dataloader):
+        if graph[2] == 0:
+            continue 
+       
+        train_spectra.append(graph[2].item())
+        spectra.append(graph[2].item())
+
     for i, graph in enumerate(test_dataloader):
         if graph[2] == 0:
             continue 
         result = model.double().forward(graph[0], graph[1], config["graph_th"])
         loss = torch.norm(result - graph[2].to(device))
+        print(graph[2].item())
         with open(args.output_file, "a") as f:
             f.write(str(loss.item()) + " ")
 
-        with open(args.output_file + "_spctra", "a") as f:
-            f.write(str(result.item()) + " ")
+        with open(args.output_file + "_spctra_test", "a") as f:
+            spectra.append(graph[2].item())
+            f.write(str(graph[2].item()) + " ")
+
+    with open(args.output_file + "_spectra_full", "a") as f:
+        for i in spectra:
+            f.write(str(i) + " ")
+
+    with open(args.output_file + "_spectra_train", "a") as f:
+        for i in train_spectra:
+            f.write(str(i) + " ")
 
 if __name__ == "__main__":
     main()

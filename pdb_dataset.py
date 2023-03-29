@@ -20,6 +20,7 @@ class PDBDatasetConfig:
     excel_path = '/cs/labs/dina/meitar/rhodopsins/excel/data.xlsx'
     graph_dists_path = '/cs/labs/dina/meitar/rhodopsins/their_graph/'
     graph_features_path = '/cs/labs/dina/meitar/ionet-meitar/Interface_grid/new_features/24_acids_with_atoms/'
+    indexes = []
 
 
 class PDBDataset(Dataset):
@@ -74,7 +75,7 @@ class PDBDataset(Dataset):
         return self.excel_data.shape[0] - 1
 
     @staticmethod
-    def read_graph(dists_file_name, features_file_name):
+    def read_graph(dists_file_name, features_file_name, indexes):
         dists = None
         features = None
         if os.path.exists(dists_file_name):
@@ -83,11 +84,11 @@ class PDBDataset(Dataset):
         if os.path.exists(features_file_name):
             features = np.load(features_file_name)
 
-        return features, dists
+        return features[:, indexes], dists
 
     def __getitem__(self, idx):
         entry = self.excel_data.iloc[idx]
-        features, dists = PDBDataset.read_graph(self.config.graph_dists_path + "cutted_parts{}_dists.npy".format(idx), self.config.graph_features_path + "cutted_parts{}.npz".format(idx))
+        features, dists = PDBDataset.read_graph(self.config.graph_dists_path + "cutted_parts{}_dists.npy".format(idx), self.config.graph_features_path + "cutted_parts{}.npz".format(idx), self.config.indexes)
 
         wildtype = self.get_category('Wildtype')[idx]
         lmax = self.get_category('lmax')[idx]
