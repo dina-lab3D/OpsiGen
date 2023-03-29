@@ -8,5 +8,5 @@ module load cudnn/8.0.4
 echo $1
 echo $2
 echo "2"
-python -u test.py $1 $2
+python -u test.py $1 $2 $3
 echo "3"
