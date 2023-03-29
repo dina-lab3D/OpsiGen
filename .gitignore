@@ -25,5 +25,6 @@ log
 /splits/
 /pickles/
 /wandb/
+/*graph*/
 slurm*
 *.pckl
