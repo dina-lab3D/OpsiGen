@@ -1,0 +1,14 @@
+{
+	"fasta_path": "/cs/labs/dina/meitar/rhodopsins/scripts/pipeline_auto/sample_fasta.fasta",
+	"wavelength_file": "/cs/labs/dina/meitar/rhodopsins/excel/wavelength.dat",
+	"pdb_path": "/cs/labs/dina/meitar/rhodopsins/scripts/pipeline_auto/sample_pdb.pdb",
+	"aligning_index": 170,
+	"sequences": "/cs/labs/dina/meitar/rhodopsins/excel/sequences.fas",
+	"cutted_parts_dir": "/cs/labs/dina/meitar/rhodopsins/scripts/pipeline_auto/cutted_parts/",
+	"features": "/cs/labs/dina/meitar/rhodopsins/scripts/pipeline_auto/features/",
+	"cutted_result_pdb_path": "/cs/labs/dina/meitar/rhodopsins/scripts/pipeline_auto/cutted_parts/cutted_parts0.pdb",
+	"feature_maker_script": "/cs/labs/dina/meitar/ionet-meitar/Interface_grid/run.sh",
+	"amino_acid_feature_script": "/cs/labs/dina/meitar/ionet-meitar/Interface_grid/add_amino_acid_features/run.sh",
+	"graph_maker_script": "/cs/labs/dina/meitar/rhodopsins/scripts/pipeline_auto/edge_maker.py",
+	"edge_dists_path": "/cs/labs/dina/meitar/rhodopsins/scripts/pipeline_auto/dists/"
+}
