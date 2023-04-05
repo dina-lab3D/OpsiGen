@@ -1,0 +1,14 @@
+{
+	"fasta_path": "./sample_fasta.fasta",
+	"wavelength_file": "../excel/wavelength.dat",
+	"pdb_path": "./sample_pdb.pdb",
+	"aligning_index": 170,
+	"sequences": "../excel/sequences.fas",
+	"cutted_parts_dir": "./cutted_parts/",
+	"features": "./features/",
+	"cutted_result_pdb_path": "./cutted_parts/cutted_parts0.pdb",
+	"feature_maker_script": "./feature_maker.sh",
+	"amino_acid_feature_script": "./add_amino_acid_features.sh",
+	"graph_maker_script": "./edge_maker.py",
+	"edge_dists_path": "./dists/"
+}

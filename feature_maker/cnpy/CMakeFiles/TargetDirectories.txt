@@ -1,0 +1,7 @@
+/cs/labs/dina/punims/IonNet/Interface_grid/cnpy/CMakeFiles/install/strip.dir
+/cs/labs/dina/punims/IonNet/Interface_grid/cnpy/CMakeFiles/edit_cache.dir
+/cs/labs/dina/punims/IonNet/Interface_grid/cnpy/CMakeFiles/cnpy-static.dir
+/cs/labs/dina/punims/IonNet/Interface_grid/cnpy/CMakeFiles/list_install_components.dir
+/cs/labs/dina/punims/IonNet/Interface_grid/cnpy/CMakeFiles/install/local.dir
+/cs/labs/dina/punims/IonNet/Interface_grid/cnpy/CMakeFiles/rebuild_cache.dir
+/cs/labs/dina/punims/IonNet/Interface_grid/cnpy/CMakeFiles/install.dir
