@@ -1,9 +1,5 @@
-import os
 from Bio import PDB
 from Bio.PDB import PDBIO
-from Bio.pairwise2 import format_alignment
-from aligner import Aligner
-from sequences import Sequences
 
 class Cutter:
 
