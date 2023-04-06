@@ -2,7 +2,7 @@
 	"fasta_path": "./sample_fasta.fasta",
 	"wavelength_file": "../excel/wavelength.dat",
 	"pdb_path": "./sample_pdb.pdb",
-	"aligning_index": 170,
+	"aligning_index": -1,
 	"sequences": "../excel/sequences.fas",
 	"cutted_parts_dir": "./cutted_parts/",
 	"features": "./features/",
