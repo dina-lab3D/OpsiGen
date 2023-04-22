@@ -67,6 +67,7 @@ def generate_dataset_config(config):
 
 
 def main():
+    breakpoint()
     print("Hello!")
     args = parse_arguments()
     config = set_config(args.config_path)

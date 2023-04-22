@@ -7,12 +7,6 @@ from dataclasses import dataclass
 from collections import Counter
 
 
-FILE_PATH = './excel/data.xlsx'
-WILDTYPES_LIST_TEST = '/cs/labs/dina/meitar/rhodopsins/splits/test0'
-WILDTYPES_LIST_TRAIN = '/cs/labs/dina/meitar/rhodopsins/splits/train0'
-NORMALIZE_LAST = True
-
-
 # a simple custom collate function, just to show the idea
 
 @dataclass
@@ -58,6 +52,9 @@ class PDBDataset(Dataset):
             means[-3:] = 0
             stds[-3:] = 1
 
+        np.save("means.npy", means)
+        np.save("stds.npy", stds)
+
         return means, stds
 
 
@@ -86,6 +83,7 @@ class PDBDataset(Dataset):
 
         if os.path.exists(features_file_name):
             features = np.load(features_file_name)
+            assert len(features.shape) == 2
 
         return features[:, indexes], dists
 
@@ -119,30 +117,6 @@ class PDBDataset(Dataset):
 
         normalized_features = (features[:, self.stds != 0] - self.means[self.stds != 0]) / self.stds[self.stds != 0]
         return normalized_features, dists, lmax
-
-
-def main():
-    train_dataset = PDBDataset(PDBDatasetConfig(), WILDTYPES_LIST_TRAIN, normalize_last=True)
-    test_dataset = PDBDataset(PDBDatasetConfig(), WILDTYPES_LIST_TEST, means=train_dataset.means, stds=train_dataset.stds, normalize_last=True)
-
-    result = []
-    for feat, dists, lmax in train_dataset:
-        if len(feat) != 0:
-            result.append(feat) 
-            #print(np.std(feat))
-            #print(feat[:,-3:])
-
-    h = np.vstack(result)
-
-    for feat, dists, lmax in test_dataset:
-        if len(feat) != 0:
-            result.append(feat) 
-            #print(np.std(feat))
-            #print(feat[:,-3:])
-
-    h = np.vstack(result)
-        
-
 
 if __name__ == "__main__":
     main()

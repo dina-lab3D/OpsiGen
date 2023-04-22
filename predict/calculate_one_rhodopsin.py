@@ -34,7 +34,11 @@ def parse_arguments():
     parser.add_argument("config_path")
     parser.add_argument("pickle_file")
     parser.add_argument("output_file")
+    parser.add_argument("features_file")
+    parser.add_argument("dists_file")
     args = parser.parse_args()
+
+    print(args)
 
     return args
 
@@ -67,9 +71,12 @@ def main():
     to_load = False
     with open(args.pickle_file, 'rb') as f:
         model = pickle.load(f).to(device)
-    train_dataset = PDBDataset(generate_dataset_config(config), config["train_wildtypes_list"], normalize_last=config["dataset_normalize_last"])
 
-    normalized_features, dists = train_dataset.get_specific_item("../pipeline_auto/dists/cutted_parts0_dists.npy", "../pipeline_auto/features/cutted_parts0.npz", range(36))
+    means = np.load("means.npy")
+    stds = np.load("stds.npy")
+    train_dataset = PDBDataset(generate_dataset_config(config), config["train_wildtypes_list"], normalize_last=config["dataset_normalize_last"], means=means, stds=stds)
+
+    normalized_features, dists = train_dataset.get_specific_item(args.dists_file, args.features_file, range(36))
 
     result = model.double().forward(torch.tensor(normalized_features), torch.tensor(dists), config["graph_th"])
     print("outputing to" + str(args.output_file))

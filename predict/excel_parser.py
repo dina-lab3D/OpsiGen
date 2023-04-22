@@ -4,12 +4,6 @@ import numpy as np
 from Bio import PDB
 from scipy.spatial import distance
 
-
-EXCEL_PATH = "/cs/labs/dina/meitar/rhodopsins/excel/data.xlsx"
-
-FASTAS_PATH = "/cs/labs/dina/meitar/rhodopsins/fastas/"
-
-
 def generate_fasta_name(entry, id, path):
     return str(id) + '-' + entry['Name'].replace('/','.').replace(' ', '_').replace('(','O').replace(')','O') + '.fasta'
 
@@ -78,12 +72,6 @@ def generate_fasta_files(df, path):
     for i in range(len(df)):
         entry_to_fasta(df.iloc[i], i, path)
 
-
-def main():
-    # generate_distance_matrices_from_folder("/cs/labs/dina/meitar/rhodopsins/retina_pdbs/", "/tmp/")
-    # generate_distance_matrices_from_folder("/cs/labs/dina/meitar/rhodopsins/retina_pdbs/", "/cs/labs/dina/meitar/rhodopsins/graphs/")
-    df = pd.read_excel(EXCEL_PATH)
-    generate_fasta_files(df, FASTAS_PATH)
 
 if __name__ == "__main__":
     main()
