@@ -1,7 +1,6 @@
 import numpy as np
 import json
 import alignment
-from alpha_fold_feature_parser import AlphaFoldFeatureMaker
 
 class Protein:
 
@@ -20,7 +19,6 @@ class Protein:
         for key in amino_mapping:
             self.amino_mapping[key] = np.array(amino_mapping[key])
         self.atom_types = []
-        self.afm = AlphaFoldFeatureMaker()
 
         # self.amino_mapping["RET"] = np.zeros(Protein.AMINO_FEATURE_LEN)
         self.previous_features = np.load(np_feature_file)
