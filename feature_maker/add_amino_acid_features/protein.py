@@ -5,8 +5,8 @@ from alpha_fold_feature_parser import AlphaFoldFeatureMaker
 
 class Protein:
 
-    AMINO_DICT = "/cs/labs/dina/meitar/ionet-meitar/Interface_grid/add_amino_acid_features/amino_mapping"
-    SEQFILE = "/cs/labs/dina/meitar/ionet-meitar/Interface_grid/add_amino_acid_features/new_sequence.fas"
+    AMINO_DICT = "../feature_maker/add_amino_acid_features/amino_mapping"
+    SEQFILE = "../feature_maker/add_amino_acid_features/new_sequence.fas"
     ORIGINAL_FEATURE_LEN = 18
     AMINO_FEATURE_LEN = 24
     THEIR_FEATURE_LENGTH = 18
