@@ -1,5 +1,6 @@
 import numpy as np
 import argparse
+import os
 from protein import Protein
 
 
@@ -11,13 +12,33 @@ def parse_args():
 
     return parser.parse_args()
 
+def get_file_names(input_dir):
+
+    result = []
+    
+    for dirpath, _, filenames in os.walk(input_dir):
+        for filename in filenames:
+            no_suffix = "".join(filename.split(".")[:-1])
+            result.append(no_suffix)
+
+    result.sort()
+    print(result)
+
+    return result
+
 def loop_through_proteins(input_pdb_dir, input_feature_dir, output_feature_dir):
-    file_name = "cutted_parts{}.{}"
-    for i in range(0, 1):
+    PDB_SUFFIX = ".pdb"
+    FEATURE_SUFFIX = ".npz"
+    input_pdbs = get_file_names(input_pdb_dir)
+    input_features = get_file_names(input_feature_dir)
+
+    assert input_pdbs == input_features
+
+    for i, file_name in enumerate(input_pdbs):
         try:
-            pdb_path = input_pdb_dir + file_name.format(i, "pdb")
-            last_feature_path = input_feature_dir + file_name.format(i, "npz")
-            new_feature_path = output_feature_dir + file_name.format(i, "npz")
+            pdb_path = os.path.join(input_pdb_dir, file_name + PDB_SUFFIX)
+            last_feature_path = os.path.join(input_feature_dir, file_name + FEATURE_SUFFIX)
+            new_feature_path = os.path.join(output_feature_dir, file_name + FEATURE_SUFFIX)
             curr_pro = Protein(pdb_path, last_feature_path, i)
             curr_pro.save_new_features(new_feature_path)
         except FileNotFoundError:

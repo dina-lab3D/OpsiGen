@@ -15,7 +15,6 @@ class Protein:
 
     def __init__(self, pdb_path, np_feature_file, index):
         self.amino_mapping = dict()
-        self.index = Protein.get_number_from_path(pdb_path)
         with open(Protein.AMINO_DICT, "r") as f:
             amino_mapping = json.load(f)
         for key in amino_mapping:
@@ -58,8 +57,6 @@ class Protein:
         amino_acid = tokens[amino_acid_index]
         atom_type = tokens[amino_acid_index - 1]
         feat = np.copy(self.amino_mapping[amino_acid])
-        # alphafold_feat = self.afm.get(self.index)[int(tokens[amino_acid_index + 2]) - 1]
-        # location_feat = self.create_location_feature(tokens)
 
         return np.hstack([feat])
 
