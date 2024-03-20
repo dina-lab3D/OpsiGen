@@ -1,6 +1,6 @@
 # RhoMax
 
-RhoMax that utilizes **geometric deep learning** to predict the absorption wavelength of rhodopsins solely based on their sequences.
+RhoMax utilizes **geometric deep learning** to predict the absorption wavelength of rhodopsins solely based on their sequences.
 ![Main Figure](Images/main_figure.png)
 
 # How to run RhoMax locally:
