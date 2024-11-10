@@ -17,6 +17,7 @@ pip install torch-spline-conv -f https://data.pyg.org/whl/torch-1.13.0+cpu.html
 cd ./cutting/alignments/
 wget https://mmseqs.com/foldmason/foldmason-linux-avx2.tar.gz
 tar xvzf foldmason-linux-avx2.tar.gz
+cp ./run_mason.sh ./foldmason
 ```
 
 # run RhoMax:
