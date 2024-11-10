@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
 
 	std::cout << "files that this batch is working on are\n:";
 	for(auto& dirEntry : dir_vec){
-		std::cout << dirEntry << '\n';
+		// std::cout << dirEntry << '\n';
 	}
 
 	for(auto& dirEntry : dir_vec)

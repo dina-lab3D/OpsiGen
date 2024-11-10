@@ -45,6 +45,11 @@ class Protein:
         return feat
 
     def parse_pdb_line(self, line):
+        amino_acid_codes = {
+            'ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 'GLY',
+            'HIS', 'ILE', 'LEU', 'LYS', 'MET', 'PHE', 'PRO', 'SER',
+            'THR', 'TRP', 'TYR', 'VAL'
+        }
         tokens = line.split()
         amino_acid_index = 0
         if len(tokens) == 11 or len(tokens) == 12 or tokens[0] == 'HETATM':
@@ -53,6 +58,8 @@ class Protein:
             amino_acid_index = 2
 
         amino_acid = tokens[amino_acid_index]
+        if amino_acid not in amino_acid_codes:
+            amino_acid = [tok for tok in tokens if (tok in amino_acid_codes)][0]
         atom_type = tokens[amino_acid_index - 1]
         feat = np.copy(self.amino_mapping[amino_acid])
 

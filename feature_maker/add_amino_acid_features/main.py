@@ -15,11 +15,18 @@ def parse_args():
 def get_file_names(input_dir):
 
     result = []
-    
-    for dirpath, _, filenames in os.walk(input_dir):
-        for filename in filenames:
-            no_suffix = "".join(filename.split(".")[:-1])
-            result.append(no_suffix)
+    check = list(os.listdir(input_dir))
+    for filename in os.listdir(input_dir):
+        # Check if it's a file (and not a subdirectory)
+        if os.path.isfile(os.path.join(input_dir, filename)):
+            if filename[0:2] != ".~":
+                no_suffix = "".join(filename.split(".")[:-1])
+                result.append(no_suffix)
+
+    # for dirpath, _, filenames in os.walk(input_dir):
+    #     for filename in filenames:
+    #         no_suffix = "".join(filename.split(".")[:-1])
+    #         result.append(no_suffix)
 
     result.sort()
     print(result)

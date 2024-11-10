@@ -1,0 +1,85 @@
+easy-msa ./alignments/fm_ams/pdb_folder/ ./alignments/fm_ams/unique_id_for_fm_alignment_try tmpFolder 
+
+MMseqs Version:             	99fbda50e6c296c9fdf15d05fefedbb91f4efe84
+Path to ProstT5             	
+Chain name mode             	0
+Write mapping file          	0
+Mask b-factor threshold     	0
+Coord store mode            	2
+Write lookup file           	1
+Input format                	0
+File Inclusion Regex        	.*
+File Exclusion Regex        	^$
+Threads                     	8
+Verbosity                   	3
+Global sequence weighting   	true
+Match ratio                 	0.51
+Filter MSA                  	1
+Select N most diverse seqs  	1000
+Minimum score per column    	-20
+Gap open cost               	aa:10,nucl:10
+Gap extension cost          	aa:1,nucl:1
+Mask profile                	1
+Pseudo count mode           	0
+AA alignment PCA            	1.1
+AA alignment PCB            	4.1
+3Di alignment PCA           	1.4
+3Di alignment PCB           	1.5
+AA alignment score bias     	0.6
+3Di alignment score bias    	0.6
+Input Newick guide tree     	
+Recompute scores            	false
+Regressive alignment        	false
+Substitution matrix         	aa:3di.out,nucl:3di.out
+Max sequence length         	65535
+Total refinement iterations 	0
+AA matrix bit factor        	1.1
+3Di matrix bit factor       	2.1
+LDDT pair threshold         	0
+Compositional bias          	1
+Random number generator seed	-1
+                            	
+                            	true
+Pre-cluster structures      	false
+Report mode                 	0
+
+createdb ./alignments/fm_ams/pdb_folder/ tmpFolder/18111092346389237228/structures --chain-name-mode 0 --write-mapping 0 --mask-bfactor-threshold 0 --coord-store-mode 2 --write-lookup 1 --input-format 0 --file-include '.*' --file-exclude '^$' --threads 8 -v 3 
+
+Output file: tmpFolder/18111092346389237228/structures
+[=================================================================] 885 0s 318ms
+Time for merging to structures_ss: 0h 0m 0s 80ms
+Time for merging to structures_h: 0h 0m 0s 81ms
+Time for merging to structures_ca: 0h 0m 0s 107ms
+Time for merging to structures: 0h 0m 0s 114ms
+Ignore 0 out of 885.
+Too short: 0, incorrect: 0, not proteins: 0.
+Time for processing: 0h 0m 1s 269ms
+structuremsa tmpFolder/18111092346389237228/structures ./alignments/fm_ams/unique_id_for_fm_alignment_try --wg 1 --match-ratio 0.51 --filter-msa 1 --diff 1000 --qsc -20 --gap-open aa:10,nucl:10 --gap-extend aa:1,nucl:1 --mask-profile 1 --pseudo-cnt-mode 0 --pca-aa 1.1 --pcb-aa 4.1 --pca-3di 1.4 --pcb-3di 1.5 --score-bias-aa 0.6 --score-bias-3di 0.6 --recompute-scores 0 --regressive 0 --sub-mat 'aa:3di.out,nucl:3di.out' --threads 8 --max-seq-len 65535 --refine-iters 0 --bitfactor-aa 1.1 --bitfactor-3di 2.1 --pair-threshold 0 --comp-bias-corr 1 -v 3 --refine-seed -1 
+
+Got databases
+Got substitution matrices
+Initialised MSAs, Sequence objects
+Set up tiny substitution matrices
+Performing initial all vs all alignments
+Generating guide tree
+Optimising merge order
+Writing guide tree to: ./alignments/fm_ams/unique_id_for_fm_alignment_try.nw
+Begin progressive alignment
+Time for merging to unique_id_for_fm_alignment_try_aa.fa: 0h 0m 0s 76ms
+Time for merging to unique_id_for_fm_alignment_try_3di.fa: 0h 0m 0s 66ms
+Time for processing: 0h 0m 3s 346ms
+rmdb tmpFolder/18111092346389237228/result -v 3 
+
+Time for processing: 0h 0m 0s 1ms
+rmdb tmpFolder/18111092346389237228/query -v 3 
+
+Time for processing: 0h 0m 0s 1ms
+rmdb tmpFolder/18111092346389237228/query_h -v 3 
+
+Time for processing: 0h 0m 0s 1ms
+rmdb tmpFolder/18111092346389237228/query_ca -v 3 
+
+Time for processing: 0h 0m 0s 1ms
+rmdb tmpFolder/18111092346389237228/query_ss -v 3 
+
+Time for processing: 0h 0m 0s 1ms

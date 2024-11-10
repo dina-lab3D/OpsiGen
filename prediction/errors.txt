@@ -1,0 +1,6 @@
+torch.ops.load_library(importlib.machinery.PathFinder().find_spec(
+        f'{library}_{suffix}', [osp.dirname(__file__)]).origin)
+        
+import torch_geometric.nn
+
+from torch_spline_conv import spline_basis, spline_weighting
